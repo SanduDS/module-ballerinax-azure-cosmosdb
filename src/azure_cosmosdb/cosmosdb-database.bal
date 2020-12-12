@@ -96,10 +96,7 @@ public client class Database  {
         }
         var response = self.azureCosmosClient->get(path, request);
         stream<ContainerResponse> containerStream  = [].toStream();
-        [json, Headers] jsonresponse = check mapResponseToTuple(response);
-        json payload;
-        Headers headers;
-        [payload,headers] = jsonresponse;
+        var [payload, headers] = check mapResponseToTuple(response);
         ContainerResponse[] containers = containerArray == ()? []:<ContainerResponse[]>containerArray;
         if(payload.DocumentCollections is json){
             ContainerResponse[] finalArray = convertToContainerArray(containers, <json[]>payload.DocumentCollections);
@@ -211,10 +208,7 @@ public client class Database  {
         }
         var response = self.azureCosmosClient->get(path, request);
         stream<User> storedProcedureStream  = [].toStream();
-        [json, Headers] jsonresponse = check mapResponseToTuple(response);
-        json payload;
-        Headers headers;
-        [payload,headers] = jsonresponse;
+        var [payload, headers] = check mapResponseToTuple(response);
         User[] storedProcedures = storedProcedureArray == ()? []:<User[]>storedProcedureArray;
         if(payload.Users is json){
             User[] finalArray = convertToUserArray(storedProcedures, <json[]>payload.Users);
@@ -320,10 +314,7 @@ public client class Database  {
         }
         var response = self.azureCosmosClient->get(path, request);
         stream<Permission> storedProcedureStream  = [].toStream();
-        [json, Headers] jsonresponse = check mapResponseToTuple(response);
-        json payload;
-        Headers headers;
-        [payload,headers] = jsonresponse;
+        var [payload, headers] = check mapResponseToTuple(response);
         Permission[] storedProcedures = storedProcedureArray == ()? []:<Permission[]>storedProcedureArray;
         if(payload.Permissions is json){
             Permission[] finalArray = convertToPermissionArray(storedProcedures, <json[]>payload.Permissions);

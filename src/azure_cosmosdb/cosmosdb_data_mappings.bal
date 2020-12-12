@@ -18,9 +18,7 @@ isolated function mapOfferHeaderType(string httpVerb, string url) returns Header
 }
 
 isolated function mapJsonToDatabaseType([json, Headers?] jsonPayload) returns DatabaseResponse {
-    json payload;
-    Headers? headers;
-    [payload, headers] = jsonPayload;
+    var [payload, headers] = jsonPayload;
     DatabaseResponse database = {};
     database.id = payload.id != ()? payload.id.toString() : EMPTY_STRING;
     database.resourceId = payload._rid != ()? payload._rid.toString() : EMPTY_STRING;
@@ -32,9 +30,7 @@ isolated function mapJsonToDatabaseType([json, Headers?] jsonPayload) returns Da
 }
 
 isolated function mapJsonToContainerType([json, Headers?] jsonPayload) returns @tainted ContainerResponse {
-    json payload;
-    Headers? headers;
-    [payload, headers] = jsonPayload;
+    var [payload, headers] = jsonPayload;
     ContainerResponse container = {};
     container.id = payload.id.toString();
     container.resourceId = payload._rid != ()? payload._rid.toString() : EMPTY_STRING;
@@ -49,10 +45,8 @@ isolated function mapJsonToContainerType([json, Headers?] jsonPayload) returns @
 }
 
 isolated function mapJsonToDocumentType([json, Headers?] jsonPayload) returns @tainted Document {  
+    var [payload, headers] = jsonPayload;
     Document document = {};
-    json payload;
-    Headers? headers;
-    [payload, headers] = jsonPayload;
     document.id = payload.id != () ? payload.id.toString(): EMPTY_STRING;
     document.resourceId = payload._rid != () ? payload._rid.toString(): EMPTY_STRING;
     document.selfReference = payload._self != () ? payload._self.toString(): EMPTY_STRING;
@@ -139,10 +133,8 @@ isolated function mapJsonToIndexType(json jsonPayload) returns Index {
 }
 
 isolated function mapJsonToStoredProcedureType([json, Headers?] jsonPayload) returns @tainted StoredProcedure {
+    var [payload, headers] = jsonPayload;
     StoredProcedure storedProcedure = {};
-    json payload;
-    Headers? headers;
-    [payload, headers] = jsonPayload;
     storedProcedure.resourceId = payload._rid != ()? payload._rid.toString() : EMPTY_STRING;
     storedProcedure.id = payload.id != () ? payload.id.toString(): EMPTY_STRING;
     storedProcedure.body = payload.body !=() ? payload.body.toString(): EMPTY_STRING;
@@ -153,10 +145,8 @@ isolated function mapJsonToStoredProcedureType([json, Headers?] jsonPayload) ret
 }
 
 isolated function mapJsonToUserDefinedFunctionType([json, Headers?] jsonPayload) returns @tainted UserDefinedFunction {
+    var [payload, headers] = jsonPayload;
     UserDefinedFunction userDefinedFunction = {};
-    json payload;
-    Headers? headers;
-    [payload, headers] = jsonPayload;
     userDefinedFunction.resourceId = payload._rid != () ? payload._rid.toString() : EMPTY_STRING;
     userDefinedFunction.id = payload.id != () ? payload.id.toString() : EMPTY_STRING;
     userDefinedFunction.body = payload.body != () ? payload.body.toString() : EMPTY_STRING;
@@ -167,10 +157,8 @@ isolated function mapJsonToUserDefinedFunctionType([json, Headers?] jsonPayload)
 }
 
 isolated function mapJsonToTriggerType([json, Headers?] jsonPayload) returns @tainted Trigger {
+    var [payload, headers] = jsonPayload;
     Trigger trigger = {};
-    json payload;
-    Headers? headers;
-    [payload, headers] = jsonPayload;
     trigger.resourceId = payload._rid != () ? payload._rid.toString() : EMPTY_STRING;
     trigger.id = payload.id != () ? payload.id.toString() : EMPTY_STRING;
     trigger.body = payload.body != () ? payload.body.toString() : EMPTY_STRING;
@@ -183,10 +171,8 @@ isolated function mapJsonToTriggerType([json, Headers?] jsonPayload) returns @ta
 }
 
 isolated function mapJsonToUserType([json, Headers?] jsonPayload) returns @tainted User {
+    var [payload, headers] = jsonPayload;
     User user = {};
-    json payload;
-    Headers? headers;
-    [payload, headers] = jsonPayload;
     user.resourceId = payload._rid != () ? payload._rid.toString() : EMPTY_STRING;
     user.id = payload.id != () ? payload.id.toString() : EMPTY_STRING;
     if(headers is Headers) {
@@ -196,10 +182,8 @@ isolated function mapJsonToUserType([json, Headers?] jsonPayload) returns @taint
 }
 
 isolated function mapJsonToPermissionType([json, Headers?] jsonPayload) returns @tainted Permission {
+    var [payload, headers] = jsonPayload;
     Permission permission = {};
-    json payload;
-    Headers? headers;
-    [payload, headers] = jsonPayload;
     permission.id = payload.id != () ? payload.id.toString() : EMPTY_STRING;
     permission.resourceId = payload._rid != () ? payload._rid.toString() : EMPTY_STRING;
     permission.token = payload._token != () ? payload._token.toString() : EMPTY_STRING;
@@ -212,10 +196,8 @@ isolated function mapJsonToPermissionType([json, Headers?] jsonPayload) returns 
 }
 
 isolated function mapJsonToOfferType([json, Headers?] jsonPayload) returns @tainted Offer {
+    var [payload, headers] = jsonPayload;
     Offer offer = {};
-    json payload;
-    Headers? headers;
-    [payload, headers] = jsonPayload;
     offer.resourceId = payload._rid != () ? payload._rid.toString() : EMPTY_STRING;
     offer.id = payload.id != () ? payload.id.toString() : EMPTY_STRING;
     offer.offerVersion = payload.offerVersion != () ? payload.offerVersion.toString() : EMPTY_STRING;

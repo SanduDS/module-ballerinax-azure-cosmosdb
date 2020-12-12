@@ -138,10 +138,7 @@ public client class Container  {
         }
         var response = self.azureCosmosClient->get(path, request);
         stream<Document> documentStream  = [].toStream();
-        [json, Headers] jsonresponse = check mapResponseToTuple(response);
-        json payload;
-        Headers headers;
-        [payload,headers] = jsonresponse;
+        var [payload, headers] = check mapResponseToTuple(response);
         Document[] documents = documentArray is Document[]?<Document[]>documentArray:[];
         if(payload.Documents is json){
             Document[] finalArray = convertToDocumentArray(documents, <json[]>payload.Documents);
@@ -244,10 +241,7 @@ public client class Container  {
         }
         var response = self.azureCosmosClient->get(path, request);
         stream<StoredProcedure> storedProcedureStream  = [].toStream();
-        [json, Headers] jsonresponse = check mapResponseToTuple(response);
-        json payload;
-        Headers headers;
-        [payload,headers] = jsonresponse;
+        var [payload, headers] = check mapResponseToTuple(response);
         StoredProcedure[] storedProcedures = storedProcedureArray == ()? []:<StoredProcedure[]>storedProcedureArray;
         if(payload.StoredProcedures is json){
             StoredProcedure[] finalArray = convertToStoredProcedureArray(storedProcedures, <json[]>payload.StoredProcedures);
@@ -344,10 +338,7 @@ public client class Container  {
         }
         var response = self.azureCosmosClient->get(path, request);
         stream<StoredProcedure> storedProcedureStream  = [].toStream();
-        [json, Headers] jsonresponse = check mapResponseToTuple(response);
-        json payload;
-        Headers headers;
-        [payload,headers] = jsonresponse;
+        var [payload, headers] = check mapResponseToTuple(response);
         UserDefinedFunction[] storedProcedures = storedProcedureArray == ()? []:<UserDefinedFunction[]>storedProcedureArray;
         if(payload.UserDefinedFunctions is json){
             UserDefinedFunction[] finalArray = convertsToUserDefinedFunctionArray(storedProcedures, <json[]>payload.UserDefinedFunctions);
@@ -427,10 +418,7 @@ public client class Container  {
         }
         var response = self.azureCosmosClient->get(path, request);
         stream<Trigger> storedProcedureStream  = [].toStream();
-        [json, Headers] jsonresponse = check mapResponseToTuple(response);
-        json payload;
-        Headers headers;
-        [payload,headers] = jsonresponse;
+        var [payload, headers] = check mapResponseToTuple(response);
         Trigger[] storedProcedures = storedProcedureArray == ()? []:<Trigger[]>storedProcedureArray;
         if(payload.Triggers is json){
             Trigger[] finalArray = convertToTriggerArray(storedProcedures, <json[]>payload.Triggers);

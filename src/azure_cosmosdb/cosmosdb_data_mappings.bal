@@ -17,11 +17,11 @@ isolated function mapOfferHeaderType(string httpVerb, string url) returns Header
     return params;
 }
 
-isolated function mapJsonToDatabaseType([json, Headers?] jsonPayload) returns Database {
+isolated function mapJsonToDatabaseType([json, Headers?] jsonPayload) returns DatabaseResponse {
     json payload;
     Headers? headers;
     [payload, headers] = jsonPayload;
-    Database database = {};
+    DatabaseResponse database = {};
     database.id = payload.id != ()? payload.id.toString() : EMPTY_STRING;
     database.resourceId = payload._rid != ()? payload._rid.toString() : EMPTY_STRING;
     database.selfReference = payload._self != ()? payload._self.toString() : EMPTY_STRING;
@@ -229,7 +229,7 @@ isolated function mapJsonToOfferType([json, Headers?] jsonPayload) returns @tain
     return offer;
 }
 
-isolated function convertToDatabaseArray(@tainted Database[] databases, json[] sourceDatabaseArrayJsonObject) returns @tainted  Database[] {
+isolated function convertToDatabaseArray(@tainted DatabaseResponse[] databases, json[] sourceDatabaseArrayJsonObject) returns @tainted  DatabaseResponse[] {
     int length = databases.length();
     int i = length;
     foreach json jsonDatabase in sourceDatabaseArrayJsonObject {
@@ -351,8 +351,6 @@ isolated function convertToIndexArray(json[] sourcePathArrayJsonObject) returns 
     }
     return indexes;
 }
-
-
 
 isolated function convertToStringArray(json[] sourceArrayJsonObject) returns @tainted string[] {
     string[] strings = [];

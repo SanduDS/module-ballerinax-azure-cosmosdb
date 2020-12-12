@@ -14,7 +14,7 @@ public type ResourceProperties record {|
     string containerId = "";
 |};
 
-public type Database record {|
+public type DatabaseResponse record {|
     string id = "";
     *Common;
     string collections?;
@@ -38,11 +38,10 @@ public type Container record {|
 
 public type Document record {|
     string id = "";
+    json? documentBody =     {};
+    any[]? partitionKey = ();
     *Common;
     string attachments?;
-    json? documentBody =     {};
-    string? documentId?;
-    any[]? partitionKey = [];
     Headers?...;
 |};
 
@@ -111,7 +110,7 @@ public type Trigger record {|
 |};
 
 public type User record {|
-    *Database;
+    *DatabaseResponse;
     string permissions?;
     Headers?...;
 |};

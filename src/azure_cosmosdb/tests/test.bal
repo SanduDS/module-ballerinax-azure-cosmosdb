@@ -22,10 +22,12 @@ AzureCosmosConfiguration config = {
 
 Client AzureCosmosClient = new(config);
 
-Database database = {};
-Database manual = {};
-Database auto = {};
-Database ifexist = {};
+Database db = new("", config);
+
+DatabaseResponse database = {};
+DatabaseResponse manual = {};
+DatabaseResponse auto = {};
+DatabaseResponse ifexist = {};
 Container container = {};
 Document document = {};
 StoredProcedure storedPrcedure = {};
@@ -61,7 +63,7 @@ function test_createDatabaseUsingInvalidId(){
     var uuid = createRandomUUIDBallerina();
     string createDatabaseId = "";
     var result = AzureCosmosClient->createDatabase(createDatabaseId);
-    if(result is Database){
+    if(result is DatabaseResponse){
         test:assertFail(msg = "Database created with  '' id value");
     } else {
         var output = "";
@@ -82,7 +84,7 @@ function test_createDatabaseIfNotExist(){
     if(result is error){
         test:assertFail(msg = result.message());
     } else {
-        ifexist = <@untainted><Database> result;
+        ifexist = <@untainted><DatabaseResponse> result;
         io:println(result);
     }
 }
@@ -97,7 +99,7 @@ function test_createDatabaseIfExist(){
     var uuid = createRandomUUIDBallerina();
     string createDatabaseId = database.id;
     var result = AzureCosmosClient->createDatabaseIfNotExist(createDatabaseId);
-    if(result is Database){
+    if(result is DatabaseResponse){
         test:assertFail(msg = "Database with non unique id is created");
     } else {
         var output = "";
@@ -137,7 +139,7 @@ function test_createDatabaseWithInvalidManualThroughput(){
         throughput: 40
     };
     var result = AzureCosmosClient->createDatabase(createDatabaseManualId,  manualThroughput);
-    if(result is Database){
+    if(result is DatabaseResponse){
         test:assertFail(msg = "Database created without validating user input");
     } else {
         var output = "";
@@ -178,7 +180,7 @@ function test_createDatabaseWithBothHeaders(){
         throughput: 600
     };
     var result = AzureCosmosClient->createDatabase(createDatabaseBothId,  tp);
-    if(result is Database){
+    if(result is DatabaseResponse){
         test:assertFail(msg = "Created database with both throughput values!!");
     } else {
         var output = "";
@@ -192,13 +194,13 @@ function test_createDatabaseWithBothHeaders(){
 function test_listAllDatabases(){
     log:printInfo("ACTION : listAllDatabases()");
 
-    var result = AzureCosmosClient->getDatabases(6);
-    if(result is stream<Database>){
-        var database = result.next();
-        io:println(database?.value);
-    } else {
-        test:assertFail(msg = result.message());
-    }
+    // var result = AzureCosmosClient->getDatabases(6);
+    // if(result is stream<DatabaseResponse>){
+    //     var database = result.next();
+    //     io:println(database?.value);
+    // } else {
+    //     test:assertFail(msg = result.message());
+    // }
 }
 
 @test:Config{
@@ -209,11 +211,11 @@ function test_listOneDatabase(){
     log:printInfo("ACTION : listOneDatabase()");
 
     var result = AzureCosmosClient->getDatabase(database.id);
-    if(result is error){
-        test:assertFail(msg = result.message());
+    if(result is Database) {
+        db = result;
+        io:println(db);
     } else {
-        var output = "";
-        io:println(result);
+        test:assertFail(msg = result.message());
     }
 }
 
@@ -271,16 +273,17 @@ function test_createContainer(){
     log:printInfo("ACTION : createContainer()");
 
     var uuid = createRandomUUIDBallerina();
-    @tainted ResourceProperties propertiesNewCollection = {
-            databaseId: database.id, 
-            containerId: string `container_${uuid.toString()}`
-    };
+    // @tainted ResourceProperties propertiesNewCollection = {
+    //         databaseId: database.id, 
+    //         containerId: string `container_${uuid.toString()}`
+    // };
+    string containerId = string `container_${uuid.toString()}`;
     PartitionKey pk = {
         paths: ["/AccountNumber"], 
         kind :"Hash", 
         keyVersion: 2
     };
-    var result = AzureCosmosClient->createContainer(propertiesNewCollection, pk);
+    var result = db->createContainer(containerId, pk);
     if(result is Container){
         container = <@untainted>result;
         io:println(result);
@@ -318,11 +321,12 @@ function test_createCollectionWithManualThroughputAndIndexingPolicy(){
         keyVersion : 2
     };
     var uuid = createRandomUUIDBallerina();
-    @tainted ResourceProperties getCollection = {
-        databaseId: database.id, 
-        containerId: string `container_${uuid.toString()}`
-    };
-    var result = AzureCosmosClient->createContainer(getCollection, pk, ip, tp);
+    // @tainted ResourceProperties getCollection = {
+    //     databaseId: database.id, 
+    //     containerId: string `container_${uuid.toString()}`
+    // };
+    string containerId = string `container_${uuid.toString()}`;
+    var result = db->createContainer(containerId, pk, ip, tp);
     if(result is Container){
         var output = "";
         io:println(result);
@@ -339,22 +343,23 @@ function test_createContainerIfNotExist(){
     log:printInfo("ACTION : createContainerIfNotExist()");
 
     var uuid = createRandomUUIDBallerina();
-    @tainted ResourceProperties propertiesNewCollectionIfNotExist = {
-            databaseId: database.id, 
-            containerId: string `containere_${uuid.toString()}`
-    };
-    PartitionKey pk = {
-        paths: ["/AccountNumber"], 
-        kind :"Hash", 
-        keyVersion: 2
-    };
-    var result = AzureCosmosClient->createContainerIfNotExist(propertiesNewCollectionIfNotExist, pk);
-    if(result is Container?){
-        var output = "";
-        io:println(result);    
-    } else {
-        test:assertFail(msg = result.message());
-    }
+    // @tainted ResourceProperties propertiesNewCollectionIfNotExist = {
+    //         databaseId: database.id, 
+    //         containerId: string `containere_${uuid.toString()}`
+    // };
+    // string containerId = string `container_${uuid.toString()}`;
+    // PartitionKey pk = {
+    //     paths: ["/AccountNumber"], 
+    //     kind :"Hash", 
+    //     keyVersion: 2
+    // };
+    // var result = db->createContainerIfNotExist(containerId, pk);
+    // if(result is Container?){
+    //     var output = "";
+    //     io:println(result);    
+    // } else {
+    //     test:assertFail(msg = result.message());
+    // }
 }
 
 @test:Config{
@@ -364,11 +369,7 @@ function test_createContainerIfNotExist(){
 function test_getOneContainer(){
     log:printInfo("ACTION : getOneContainer()");
 
-    @tainted ResourceProperties getCollection = {
-        databaseId: database.id, 
-        containerId: container.id
-    };
-    var result = AzureCosmosClient->getContainer(getCollection);
+    var result = db->getContainer(container.id);
     if(result is error){
         test:assertFail(msg = result.message());
     } else {
@@ -384,13 +385,13 @@ function test_getOneContainer(){
 function test_getAllContainers(){
     log:printInfo("ACTION : getAllContainers()");
 
-    var result = AzureCosmosClient->getAllContainers(database.id);
-    if(result is stream<Container>){
-        var database = result.next();
-        io:println(database?.value);
-    } else {
-        test:assertFail(msg = result.message());
-    }
+    // var result = AzureCosmosClient->getAllContainers(database.id);
+    // if(result is stream<Container>){
+    //     var database = result.next();
+    //     io:println(database?.value);
+    // } else {
+    //     test:assertFail(msg = result.message());
+    // }
 }
 
 @test:Config{
@@ -417,11 +418,7 @@ function test_getAllContainers(){
 function test_deleteContainer(){
     log:printInfo("ACTION : deleteContainer()");
 
-    @tainted ResourceProperties deleteCollectionData = {
-            databaseId: database.id, 
-            containerId: container.id
-    };
-    var result = AzureCosmosClient->deleteContainer(deleteCollectionData);
+    var result = db->deleteContainer(container.id);
     if(result is error){
         test:assertFail(msg = result.message());
     } else {
@@ -437,11 +434,7 @@ function test_deleteContainer(){
 function test_GetPartitionKeyRanges(){
     log:printInfo("ACTION : GetPartitionKeyRanges()");
 
-    @tainted ResourceProperties resourceProperties = {
-            databaseId: database.id, 
-            containerId: container.id
-    };
-    var result = AzureCosmosClient->getPartitionKeyRanges(resourceProperties);
+    var result = db->getPartitionKeyRanges(container.id);
     if(result is error){
         test:assertFail(msg = result.message());
     } else {
@@ -1486,11 +1479,7 @@ function test_getCollection_Resource_Token(){
 
             Client AzureCosmosClientDatabase = new(configdb);
 
-            @tainted ResourceProperties getCollection = {
-                databaseId: database.id, 
-                containerId: container.id
-            };
-            var resultdb = AzureCosmosClientDatabase->getContainer(getCollection);
+            var resultdb = db->getContainer(container.id);
             if(resultdb is error){
                 test:assertFail(msg = resultdb.message());
             } else {

@@ -81,50 +81,49 @@ public  client class Client {
         request = check setHeaders(request, self.host, self.keyOrResourceToken, self.keyType, self.tokenVersion, header);
         var response = self.azureCosmosClient->get(requestPath, request);
         json jsonreponse = check mapResponseToJson(response);
-        Database db = new(jsonreponse.id.toString(), self.azureConfig); 
-        return db;  
+        Database database = new(jsonreponse.id.toString(), self.azureConfig); 
+        return database;  
     }
 
+    # List all databases inside a resource
+    # + return - If successful, returns DatabaseList. else returns error. 
+    # + maxItemCount - 
+    public remote function getDatabases(int? maxItemCount = ()) returns @tainted stream<DatabaseResponse>|error {
+        if(self.keyType == TOKEN_TYPE_RESOURCE) {
+            return prepareError(MASTER_KEY_ERROR);
+        }
+        http:Request request = new;
+        string requestPath = prepareUrl([RESOURCE_PATH_DATABASES]);
+        HeaderParameters header = mapParametersToHeaderType(GET, requestPath);
+        request = check setHeaders(request, self.host, self.keyOrResourceToken, self.keyType, self.tokenVersion, header);
+        if(maxItemCount is int){
+            request.setHeader(MAX_ITEM_COUNT_HEADER, maxItemCount.toString()); 
+        }
+        stream<DatabaseResponse> databaseStream = check self.retrieveDatabases(requestPath, request);
+        return databaseStream;
+    }
 
-    // # List all databases inside a resource
-    // # + return - If successful, returns DatabaseList. else returns error. 
-    // # + maxItemCount - 
-    // public remote function getDatabases(int? maxItemCount = ()) returns @tainted stream<Database>|error {
-    //     if(self.keyType == TOKEN_TYPE_RESOURCE) {
-    //         return prepareError(MASTER_KEY_ERROR);
-    //     }
-    //     http:Request request = new;
-    //     string requestPath = prepareUrl([RESOURCE_PATH_DATABASES]);
-    //     HeaderParameters header = mapParametersToHeaderType(GET, requestPath);
-    //     request = check setHeaders(request, self.host, self.keyOrResourceToken, self.keyType, self.tokenVersion, header);
-    //     if(maxItemCount is int){
-    //         request.setHeader(MAX_ITEM_COUNT_HEADER, maxItemCount.toString()); 
-    //     }
-    //     stream<Database> databaseStream = check self.retrieveDatabases(requestPath, request);
-    //     return databaseStream;
-    // }
-
-    // private function retrieveDatabases(string path, http:Request request, string? continuationHeader = (), Database[]? 
-    // databaseArray = (), int? maxItemCount = ()) returns @tainted stream<DatabaseResponse>|error {
-    //     if(continuationHeader is string){
-    //         request.setHeader(CONTINUATION_HEADER, continuationHeader);
-    //     }
-    //     var response = self.azureCosmosClient->get(path, request);
-    //     stream<Database> databaseStream  = [].toStream();
-    //     [json, Headers] jsonresponse = check mapResponseToTuple(response);
-    //     json payload;
-    //     Headers headers;
-    //     [payload,headers] = jsonresponse;
-    //     Database[] databases = databaseArray == ()? []:<Database[]>databaseArray;
-    //     if(payload.Databases is json){
-    //         Database[] finalArray = convertToDatabaseArray(databases, <json[]>payload.Databases);
-    //         databaseStream = (<@untainted>finalArray).toStream();
-    //         if(headers?.continuationHeader != () && finalArray.length() == maxItemCount){            
-    //             databaseStream = check self.retrieveDatabases(path, request, headers.continuationHeader,finalArray);
-    //         }
-    //     }
-    //     return databaseStream;
-    // }
+    private function retrieveDatabases(string path, http:Request request, string? continuationHeader = (), DatabaseResponse[]? 
+    databaseArray = (), int? maxItemCount = ()) returns @tainted stream<DatabaseResponse>|error {
+        if(continuationHeader is string){
+            request.setHeader(CONTINUATION_HEADER, continuationHeader);
+        }
+        var response = self.azureCosmosClient->get(path, request);
+        stream<DatabaseResponse> databaseStream  = [].toStream();
+        [json, Headers] jsonresponse = check mapResponseToTuple(response);
+        json payload;
+        Headers headers;
+        [payload,headers] = jsonresponse;
+        DatabaseResponse[] databases = databaseArray == ()? []:<DatabaseResponse[]>databaseArray;
+        if(payload.Databases is json){
+            DatabaseResponse[] finalArray = convertToDatabaseArray(databases, <json[]>payload.Databases);
+            databaseStream = (<@untainted>finalArray).toStream();
+            if(headers?.continuationHeader != () && finalArray.length() == maxItemCount){            
+                databaseStream = check self.retrieveDatabases(path, request, headers.continuationHeader,finalArray);
+            }
+        }
+        return databaseStream;
+    }
 
     # Delete a given database inside a resource
     # + databaseId -  id/name of the database to retrieve
@@ -280,455 +279,455 @@ public  client class Client {
     //     return mapJsonToPartitionKeyListType(jsonreponse);
     // }
 //-----------------------------------------------------------------------------------------------
-    # Create a Document inside a collection
-    # + properties - object of type ResourceProperties
-    # + document - object of type Document 
-    # + requestOptions - object of type RequestHeaderOptions
-    # + return - If successful, returns Document. Else returns error.  
-    public remote function createDocument(@tainted ResourceProperties properties, Document document, 
-    RequestHeaderOptions? requestOptions = ()) returns @tainted Document|error {
-        http:Request request = new;
-        string requestPath = prepareUrl([RESOURCE_PATH_DATABASES, properties.databaseId, RESOURCE_PATH_COLLECTIONS, 
-        properties.containerId, RESOURCE_PATH_DOCUMENTS]);
-        HeaderParameters header = mapParametersToHeaderType(POST, requestPath);
-        request = check setHeaders(request, self.host, self.keyOrResourceToken, self.keyType, self.tokenVersion, header);
-        request = check setPartitionKeyHeader(request, document.partitionKey);
-        if(requestOptions is RequestHeaderOptions) {
-            request = check setRequestOptions(request, requestOptions);
-        }
-        json jsonPayload = {
-            id: document.id
-        };  
-        jsonPayload = check jsonPayload.mergeJson(document.documentBody);     
-        request.setJsonPayload(jsonPayload);
-        var response = self.azureCosmosClient->post(requestPath, request);
-        [json, Headers] jsonreponse = check mapResponseToTuple(response);
-        return mapJsonToDocumentType(jsonreponse);
-    }
+    // # Create a Document inside a collection
+    // # + properties - object of type ResourceProperties
+    // # + document - object of type Document 
+    // # + requestOptions - object of type RequestHeaderOptions
+    // # + return - If successful, returns Document. Else returns error.  
+    // public remote function createDocument(@tainted ResourceProperties properties, Document document, 
+    // RequestHeaderOptions? requestOptions = ()) returns @tainted Document|error {
+    //     http:Request request = new;
+    //     string requestPath = prepareUrl([RESOURCE_PATH_DATABASES, properties.databaseId, RESOURCE_PATH_COLLECTIONS, 
+    //     properties.containerId, RESOURCE_PATH_DOCUMENTS]);
+    //     HeaderParameters header = mapParametersToHeaderType(POST, requestPath);
+    //     request = check setHeaders(request, self.host, self.keyOrResourceToken, self.keyType, self.tokenVersion, header);
+    //     request = check setPartitionKeyHeader(request, document.partitionKey);
+    //     if(requestOptions is RequestHeaderOptions) {
+    //         request = check setRequestOptions(request, requestOptions);
+    //     }
+    //     json jsonPayload = {
+    //         id: document.id
+    //     };  
+    //     jsonPayload = check jsonPayload.mergeJson(document.documentBody);     
+    //     request.setJsonPayload(jsonPayload);
+    //     var response = self.azureCosmosClient->post(requestPath, request);
+    //     [json, Headers] jsonreponse = check mapResponseToTuple(response);
+    //     return mapJsonToDocumentType(jsonreponse);
+    // }
 
-    # Replace a document inside a collection
-    # + properties - object of type ResourceProperties
-    # + document - object of type Document 
-    # + requestOptions - object of type RequestHeaderOptions
-    # set x-ms-documentdb-partitionkey header
-    # + return - If successful, returns a Document. Else returns error. 
-    public remote function replaceDocument(@tainted ResourceProperties properties, @tainted Document document, 
-    RequestHeaderOptions? requestOptions = ()) returns @tainted Document|error {         
-        http:Request request = new;
-        string requestPath = prepareUrl([RESOURCE_PATH_DATABASES, properties.databaseId, RESOURCE_PATH_COLLECTIONS, 
-        properties.containerId, RESOURCE_PATH_DOCUMENTS, document.id]);
-        HeaderParameters header = mapParametersToHeaderType(PUT, requestPath);
-        request = check setHeaders(request, self.host, self.keyOrResourceToken, self.keyType, self.tokenVersion, header);
-        request = check setPartitionKeyHeader(request, document.partitionKey);
-        if(requestOptions is RequestHeaderOptions) {
-            request = check setRequestOptions(request, requestOptions);
-        }
-        json jsonPayload = {
-            id: document.id
-        };  
-        jsonPayload = check jsonPayload.mergeJson(document.documentBody); 
-        request.setJsonPayload(<@untainted>jsonPayload);
-        var response = self.azureCosmosClient->put(requestPath, request);
-        [json, Headers] jsonreponse = check mapResponseToTuple(response);
-        return mapJsonToDocumentType(jsonreponse);
-    }
+    // # Replace a document inside a collection
+    // # + properties - object of type ResourceProperties
+    // # + document - object of type Document 
+    // # + requestOptions - object of type RequestHeaderOptions
+    // # set x-ms-documentdb-partitionkey header
+    // # + return - If successful, returns a Document. Else returns error. 
+    // public remote function replaceDocument(@tainted ResourceProperties properties, @tainted Document document, 
+    // RequestHeaderOptions? requestOptions = ()) returns @tainted Document|error {         
+    //     http:Request request = new;
+    //     string requestPath = prepareUrl([RESOURCE_PATH_DATABASES, properties.databaseId, RESOURCE_PATH_COLLECTIONS, 
+    //     properties.containerId, RESOURCE_PATH_DOCUMENTS, document.id]);
+    //     HeaderParameters header = mapParametersToHeaderType(PUT, requestPath);
+    //     request = check setHeaders(request, self.host, self.keyOrResourceToken, self.keyType, self.tokenVersion, header);
+    //     request = check setPartitionKeyHeader(request, document.partitionKey);
+    //     if(requestOptions is RequestHeaderOptions) {
+    //         request = check setRequestOptions(request, requestOptions);
+    //     }
+    //     json jsonPayload = {
+    //         id: document.id
+    //     };  
+    //     jsonPayload = check jsonPayload.mergeJson(document.documentBody); 
+    //     request.setJsonPayload(<@untainted>jsonPayload);
+    //     var response = self.azureCosmosClient->put(requestPath, request);
+    //     [json, Headers] jsonreponse = check mapResponseToTuple(response);
+    //     return mapJsonToDocumentType(jsonreponse);
+    // }
 
-    # List one document inside a collection
-    # + properties - object of type ResourceProperties
-    # + documentId - id of  Document, 
-    # + partitionKey - array containing value of parition key field.
-    # + requestOptions - object of type RequestHeaderOptions
-    # + return - If successful, returns Document. Else returns error.  
-    public remote function getDocument(@tainted ResourceProperties properties, string documentId, any[] partitionKey, 
-    RequestHeaderOptions? requestOptions = ()) returns @tainted Document|error {
-        http:Request request = new;
-        string requestPath =  prepareUrl([RESOURCE_PATH_DATABASES, properties.databaseId, RESOURCE_PATH_COLLECTIONS, 
-        properties.containerId, RESOURCE_PATH_DOCUMENTS, documentId]);
-        HeaderParameters header = mapParametersToHeaderType(GET, requestPath);
-        request = check setHeaders(request, self.host, self.keyOrResourceToken, self.keyType, self.tokenVersion, header);
-        request = check setPartitionKeyHeader(request, partitionKey);
-        if requestOptions is RequestHeaderOptions {
-            request = check setRequestOptions(request, requestOptions);
-        }
-        var response = self.azureCosmosClient->get(requestPath, request);
-        [json, Headers] jsonreponse = check mapResponseToTuple(response);
-        return mapJsonToDocumentType(jsonreponse);
-    }
+    // # List one document inside a collection
+    // # + properties - object of type ResourceProperties
+    // # + documentId - id of  Document, 
+    // # + partitionKey - array containing value of parition key field.
+    // # + requestOptions - object of type RequestHeaderOptions
+    // # + return - If successful, returns Document. Else returns error.  
+    // public remote function getDocument(@tainted ResourceProperties properties, string documentId, any[] partitionKey, 
+    // RequestHeaderOptions? requestOptions = ()) returns @tainted Document|error {
+    //     http:Request request = new;
+    //     string requestPath =  prepareUrl([RESOURCE_PATH_DATABASES, properties.databaseId, RESOURCE_PATH_COLLECTIONS, 
+    //     properties.containerId, RESOURCE_PATH_DOCUMENTS, documentId]);
+    //     HeaderParameters header = mapParametersToHeaderType(GET, requestPath);
+    //     request = check setHeaders(request, self.host, self.keyOrResourceToken, self.keyType, self.tokenVersion, header);
+    //     request = check setPartitionKeyHeader(request, partitionKey);
+    //     if requestOptions is RequestHeaderOptions {
+    //         request = check setRequestOptions(request, requestOptions);
+    //     }
+    //     var response = self.azureCosmosClient->get(requestPath, request);
+    //     [json, Headers] jsonreponse = check mapResponseToTuple(response);
+    //     return mapJsonToDocumentType(jsonreponse);
+    // }
 
-    # List all the documents inside a collection
-    # + properties - object of type ResourceProperties
-    # + requestOptions - object of type RequestHeaderOptions
-    # + maxItemCount -
-    # + return - If successful, returns DocumentList. Else returns error. 
-    public remote function getDocumentList(@tainted ResourceProperties properties, RequestHeaderOptions? requestOptions = (), int? maxItemCount = ()) 
-    returns @tainted stream<Document>|error { 
-        http:Request request = new;
-        string requestPath =  prepareUrl([RESOURCE_PATH_DATABASES, properties.databaseId, RESOURCE_PATH_COLLECTIONS, 
-        properties.containerId, RESOURCE_PATH_DOCUMENTS]);
-        HeaderParameters header = mapParametersToHeaderType(GET, requestPath);
-        request = check setHeaders(request, self.host, self.keyOrResourceToken, self.keyType, self.tokenVersion, header);
-        if requestOptions is RequestHeaderOptions {
-            request = check setRequestOptions(request, requestOptions);
-        }
-        if(maxItemCount is int){
-            request.setHeader(MAX_ITEM_COUNT_HEADER, maxItemCount.toString()); 
-        }
-        stream<Document> documentStream = check self.retrieveDocuments(requestPath, request);
-        return documentStream; 
-    }
+    // # List all the documents inside a collection
+    // # + properties - object of type ResourceProperties
+    // # + requestOptions - object of type RequestHeaderOptions
+    // # + maxItemCount -
+    // # + return - If successful, returns DocumentList. Else returns error. 
+    // public remote function getDocumentList(@tainted ResourceProperties properties, RequestHeaderOptions? requestOptions = (), int? maxItemCount = ()) 
+    // returns @tainted stream<Document>|error { 
+    //     http:Request request = new;
+    //     string requestPath =  prepareUrl([RESOURCE_PATH_DATABASES, properties.databaseId, RESOURCE_PATH_COLLECTIONS, 
+    //     properties.containerId, RESOURCE_PATH_DOCUMENTS]);
+    //     HeaderParameters header = mapParametersToHeaderType(GET, requestPath);
+    //     request = check setHeaders(request, self.host, self.keyOrResourceToken, self.keyType, self.tokenVersion, header);
+    //     if requestOptions is RequestHeaderOptions {
+    //         request = check setRequestOptions(request, requestOptions);
+    //     }
+    //     if(maxItemCount is int){
+    //         request.setHeader(MAX_ITEM_COUNT_HEADER, maxItemCount.toString()); 
+    //     }
+    //     stream<Document> documentStream = check self.retrieveDocuments(requestPath, request);
+    //     return documentStream; 
+    // }
 
-    private function retrieveDocuments(string path, http:Request request, string? continuationHeader = (), Document[]? 
-    documentArray = (), int? maxItemCount = ()) returns @tainted stream<Document>|error {
-        if(continuationHeader is string){
-            request.setHeader(CONTINUATION_HEADER, continuationHeader);
-        }
-        var response = self.azureCosmosClient->get(path, request);
-        stream<Document> documentStream  = [].toStream();
-        [json, Headers] jsonresponse = check mapResponseToTuple(response);
-        json payload;
-        Headers headers;
-        [payload,headers] = jsonresponse;
-        Document[] documents = documentArray is Document[]?<Document[]>documentArray:[];
-        if(payload.Documents is json){
-            Document[] finalArray = convertToDocumentArray(documents, <json[]>payload.Documents);
-            documentStream = (<@untainted>finalArray).toStream();
-            if(headers?.continuationHeader != () && finalArray.length() == maxItemCount){            
-                documentStream = check self.retrieveDocuments(path, request, headers.continuationHeader,finalArray);
-            }
-        }
-        return documentStream;
-    }
+    // private function retrieveDocuments(string path, http:Request request, string? continuationHeader = (), Document[]? 
+    // documentArray = (), int? maxItemCount = ()) returns @tainted stream<Document>|error {
+    //     if(continuationHeader is string){
+    //         request.setHeader(CONTINUATION_HEADER, continuationHeader);
+    //     }
+    //     var response = self.azureCosmosClient->get(path, request);
+    //     stream<Document> documentStream  = [].toStream();
+    //     [json, Headers] jsonresponse = check mapResponseToTuple(response);
+    //     json payload;
+    //     Headers headers;
+    //     [payload,headers] = jsonresponse;
+    //     Document[] documents = documentArray is Document[]?<Document[]>documentArray:[];
+    //     if(payload.Documents is json){
+    //         Document[] finalArray = convertToDocumentArray(documents, <json[]>payload.Documents);
+    //         documentStream = (<@untainted>finalArray).toStream();
+    //         if(headers?.continuationHeader != () && finalArray.length() == maxItemCount){            
+    //             documentStream = check self.retrieveDocuments(path, request, headers.continuationHeader,finalArray);
+    //         }
+    //     }
+    //     return documentStream;
+    // }
 
 
 
-    # Delete a document inside a collection
-    # + properties - object of type ResourceProperties
-    # + documentId - id of the Document 
-    # + partitionKey - array containing value of parition key field.
-    # + return - If successful, returns boolean specifying 'true' if delete is sucessful. Else returns error. 
-    public remote function deleteDocument(@tainted ResourceProperties properties, string documentId, any[] partitionKey) 
-    returns @tainted boolean|error {  
-        http:Request request = new;
-        string requestPath =  prepareUrl([RESOURCE_PATH_DATABASES, properties.databaseId, RESOURCE_PATH_COLLECTIONS, 
-        properties.containerId, RESOURCE_PATH_DOCUMENTS, documentId]);
-        HeaderParameters header = mapParametersToHeaderType(DELETE, requestPath);
-        request = check setHeaders(request, self.host, self.keyOrResourceToken, self.keyType, self.tokenVersion, header);
-        request = check setPartitionKeyHeader(request, partitionKey);
-        var response = self.azureCosmosClient->delete(requestPath, request);
-        return check getDeleteResponse(response);
-    }
+    // # Delete a document inside a collection
+    // # + properties - object of type ResourceProperties
+    // # + documentId - id of the Document 
+    // # + partitionKey - array containing value of parition key field.
+    // # + return - If successful, returns boolean specifying 'true' if delete is sucessful. Else returns error. 
+    // public remote function deleteDocument(@tainted ResourceProperties properties, string documentId, any[] partitionKey) 
+    // returns @tainted boolean|error {  
+    //     http:Request request = new;
+    //     string requestPath =  prepareUrl([RESOURCE_PATH_DATABASES, properties.databaseId, RESOURCE_PATH_COLLECTIONS, 
+    //     properties.containerId, RESOURCE_PATH_DOCUMENTS, documentId]);
+    //     HeaderParameters header = mapParametersToHeaderType(DELETE, requestPath);
+    //     request = check setHeaders(request, self.host, self.keyOrResourceToken, self.keyType, self.tokenVersion, header);
+    //     request = check setPartitionKeyHeader(request, partitionKey);
+    //     var response = self.azureCosmosClient->delete(requestPath, request);
+    //     return check getDeleteResponse(response);
+    // }
 
-    # Query documents inside a collection
-    # + properties - object of type ResourceProperties
-    # + sqlQuery - json object of type Query containing the CQL query
-    # + requestOptions - object of type RequestOptions
-    # + partitionKey - the value provided for the partition key specified in the document
-    # + return - If successful, returns a json. Else returns error. 
-    public remote function queryDocuments(@tainted ResourceProperties properties, any[] partitionKey, Query sqlQuery, 
-    RequestHeaderOptions? requestOptions = ()) returns @tainted stream<json>|error {
-        http:Request request = new;
-        string requestPath = prepareUrl([RESOURCE_PATH_DATABASES, properties.databaseId, RESOURCE_PATH_COLLECTIONS, 
-        properties.containerId, RESOURCE_PATH_DOCUMENTS]);
-        HeaderParameters header = mapParametersToHeaderType(POST, requestPath);
-        request = check setHeaders(request, self.host, self.keyOrResourceToken, self.keyType, self.tokenVersion, header);
-        request = check setPartitionKeyHeader(request, partitionKey);
-        request.setPayload(<json>sqlQuery.cloneWithType(json));
-        request = check setHeadersForQuery(request);
-        var response = self.azureCosmosClient->post(requestPath, request);
-        stream<json> jsonresponse = check mapResponseToJsonStream(response);
-        return jsonresponse;
-    }
+    // # Query documents inside a collection
+    // # + properties - object of type ResourceProperties
+    // # + sqlQuery - json object of type Query containing the CQL query
+    // # + requestOptions - object of type RequestOptions
+    // # + partitionKey - the value provided for the partition key specified in the document
+    // # + return - If successful, returns a json. Else returns error. 
+    // public remote function queryDocuments(@tainted ResourceProperties properties, any[] partitionKey, Query sqlQuery, 
+    // RequestHeaderOptions? requestOptions = ()) returns @tainted stream<json>|error {
+    //     http:Request request = new;
+    //     string requestPath = prepareUrl([RESOURCE_PATH_DATABASES, properties.databaseId, RESOURCE_PATH_COLLECTIONS, 
+    //     properties.containerId, RESOURCE_PATH_DOCUMENTS]);
+    //     HeaderParameters header = mapParametersToHeaderType(POST, requestPath);
+    //     request = check setHeaders(request, self.host, self.keyOrResourceToken, self.keyType, self.tokenVersion, header);
+    //     request = check setPartitionKeyHeader(request, partitionKey);
+    //     request.setPayload(<json>sqlQuery.cloneWithType(json));
+    //     request = check setHeadersForQuery(request);
+    //     var response = self.azureCosmosClient->post(requestPath, request);
+    //     stream<json> jsonresponse = check mapResponseToJsonStream(response);
+    //     return jsonresponse;
+    // }
 
-    # Create a new stored procedure inside a collection
-    # A stored procedure is a piece of application logic written in JavaScript that 
-    # is registered and executed against a collection as a single transaction.
-    # + properties - object of type ResourceProperties
-    # + storedProcedure - object of type StoredProcedure
-    # + return - If successful, returns a StoredProcedure. Else returns error. 
-    public remote function createStoredProcedure(@tainted ResourceProperties properties, StoredProcedure 
-    storedProcedure) returns @tainted StoredProcedure|error {
-        http:Request request = new;
-        string requestPath =  prepareUrl([RESOURCE_PATH_DATABASES, properties.databaseId, RESOURCE_PATH_COLLECTIONS, 
-        properties.containerId, RESOURCE_PATH_STORED_POCEDURES]);
-        HeaderParameters header = mapParametersToHeaderType(POST, requestPath);
-        request = check setHeaders(request, self.host, self.keyOrResourceToken, self.keyType, self.tokenVersion, header);
-        request.setJsonPayload(<json>storedProcedure.cloneWithType(json));
-        var response = self.azureCosmosClient->post(requestPath, request);
-        [json, Headers] jsonResponse = check mapResponseToTuple(response);
-        return mapJsonToStoredProcedureType(jsonResponse);    
-    }
+    // # Create a new stored procedure inside a collection
+    // # A stored procedure is a piece of application logic written in JavaScript that 
+    // # is registered and executed against a collection as a single transaction.
+    // # + properties - object of type ResourceProperties
+    // # + storedProcedure - object of type StoredProcedure
+    // # + return - If successful, returns a StoredProcedure. Else returns error. 
+    // public remote function createStoredProcedure(@tainted ResourceProperties properties, StoredProcedure 
+    // storedProcedure) returns @tainted StoredProcedure|error {
+    //     http:Request request = new;
+    //     string requestPath =  prepareUrl([RESOURCE_PATH_DATABASES, properties.databaseId, RESOURCE_PATH_COLLECTIONS, 
+    //     properties.containerId, RESOURCE_PATH_STORED_POCEDURES]);
+    //     HeaderParameters header = mapParametersToHeaderType(POST, requestPath);
+    //     request = check setHeaders(request, self.host, self.keyOrResourceToken, self.keyType, self.tokenVersion, header);
+    //     request.setJsonPayload(<json>storedProcedure.cloneWithType(json));
+    //     var response = self.azureCosmosClient->post(requestPath, request);
+    //     [json, Headers] jsonResponse = check mapResponseToTuple(response);
+    //     return mapJsonToStoredProcedureType(jsonResponse);    
+    // }
 
-    # Replace a stored procedure with new one inside a collection
-    # + properties - object of type ResourceProperties
-    # + storedProcedure - object of type StoredProcedure
-    # + return - If successful, returns a StoredProcedure. Else returns error. 
-    public remote function replaceStoredProcedure(@tainted ResourceProperties properties, @tainted StoredProcedure 
-    storedProcedure) returns @tainted StoredProcedure|error {
-        http:Request request = new;
-        string requestPath =  prepareUrl([RESOURCE_PATH_DATABASES, properties.databaseId, RESOURCE_PATH_COLLECTIONS, 
-        properties.containerId, RESOURCE_PATH_STORED_POCEDURES, storedProcedure.id]);
-        HeaderParameters header = mapParametersToHeaderType(PUT, requestPath);
-        request = check setHeaders(request, self.host, self.keyOrResourceToken, self.keyType, self.tokenVersion, header);
-        request.setJsonPayload(<@untainted><json>storedProcedure.cloneWithType(json));
-        var response = self.azureCosmosClient->put(requestPath, request);
-        [json, Headers] jsonResponse = check mapResponseToTuple(response);
-        return mapJsonToStoredProcedureType(jsonResponse);  
-    }
+    // # Replace a stored procedure with new one inside a collection
+    // # + properties - object of type ResourceProperties
+    // # + storedProcedure - object of type StoredProcedure
+    // # + return - If successful, returns a StoredProcedure. Else returns error. 
+    // public remote function replaceStoredProcedure(@tainted ResourceProperties properties, @tainted StoredProcedure 
+    // storedProcedure) returns @tainted StoredProcedure|error {
+    //     http:Request request = new;
+    //     string requestPath =  prepareUrl([RESOURCE_PATH_DATABASES, properties.databaseId, RESOURCE_PATH_COLLECTIONS, 
+    //     properties.containerId, RESOURCE_PATH_STORED_POCEDURES, storedProcedure.id]);
+    //     HeaderParameters header = mapParametersToHeaderType(PUT, requestPath);
+    //     request = check setHeaders(request, self.host, self.keyOrResourceToken, self.keyType, self.tokenVersion, header);
+    //     request.setJsonPayload(<@untainted><json>storedProcedure.cloneWithType(json));
+    //     var response = self.azureCosmosClient->put(requestPath, request);
+    //     [json, Headers] jsonResponse = check mapResponseToTuple(response);
+    //     return mapJsonToStoredProcedureType(jsonResponse);  
+    // }
 
-    # List all stored procedures inside a collection
-    # + properties - object of type ResourceProperties
-    # + maxItemCount -
-    # + return - If successful, returns a StoredProcedureList. Else returns error. 
-    public remote function listStoredProcedures(@tainted ResourceProperties properties, int? maxItemCount = ()) returns @tainted 
-    stream<StoredProcedure>|error {
-        http:Request request = new;
-        string requestPath =  prepareUrl([RESOURCE_PATH_DATABASES, properties.databaseId, RESOURCE_PATH_COLLECTIONS, 
-        properties.containerId, RESOURCE_PATH_STORED_POCEDURES]);
-        HeaderParameters header = mapParametersToHeaderType(GET, requestPath);
-        request = check setHeaders(request, self.host, self.keyOrResourceToken, self.keyType, self.tokenVersion, header);
-        if(maxItemCount is int){
-            request.setHeader(MAX_ITEM_COUNT_HEADER, maxItemCount.toString()); 
-        }
-        stream<StoredProcedure> storedProcedureStream = check self.retrieveStoredProcedures(requestPath, request);
-        return storedProcedureStream;         
-    }
+    // # List all stored procedures inside a collection
+    // # + properties - object of type ResourceProperties
+    // # + maxItemCount -
+    // # + return - If successful, returns a StoredProcedureList. Else returns error. 
+    // public remote function listStoredProcedures(@tainted ResourceProperties properties, int? maxItemCount = ()) returns @tainted 
+    // stream<StoredProcedure>|error {
+    //     http:Request request = new;
+    //     string requestPath =  prepareUrl([RESOURCE_PATH_DATABASES, properties.databaseId, RESOURCE_PATH_COLLECTIONS, 
+    //     properties.containerId, RESOURCE_PATH_STORED_POCEDURES]);
+    //     HeaderParameters header = mapParametersToHeaderType(GET, requestPath);
+    //     request = check setHeaders(request, self.host, self.keyOrResourceToken, self.keyType, self.tokenVersion, header);
+    //     if(maxItemCount is int){
+    //         request.setHeader(MAX_ITEM_COUNT_HEADER, maxItemCount.toString()); 
+    //     }
+    //     stream<StoredProcedure> storedProcedureStream = check self.retrieveStoredProcedures(requestPath, request);
+    //     return storedProcedureStream;         
+    // }
 
-    private function retrieveStoredProcedures(string path, http:Request request, string? continuationHeader = (), StoredProcedure[]? 
-    storedProcedureArray = (), int? maxItemCount = ()) returns @tainted stream<StoredProcedure>|error {
-        if(continuationHeader is string){
-            request.setHeader(CONTINUATION_HEADER, continuationHeader);
-        }
-        var response = self.azureCosmosClient->get(path, request);
-        stream<StoredProcedure> storedProcedureStream  = [].toStream();
-        [json, Headers] jsonresponse = check mapResponseToTuple(response);
-        json payload;
-        Headers headers;
-        [payload,headers] = jsonresponse;
-        StoredProcedure[] storedProcedures = storedProcedureArray == ()? []:<StoredProcedure[]>storedProcedureArray;
-        if(payload.StoredProcedures is json){
-            StoredProcedure[] finalArray = convertToStoredProcedureArray(storedProcedures, <json[]>payload.StoredProcedures);
-            storedProcedureStream = (<@untainted>finalArray).toStream();
-            if(headers?.continuationHeader != () && finalArray.length() == maxItemCount){            
-                storedProcedureStream = check self.retrieveStoredProcedures(path, request, headers.continuationHeader,finalArray);
-            }
-        }
-        return storedProcedureStream;
-    }
+    // private function retrieveStoredProcedures(string path, http:Request request, string? continuationHeader = (), StoredProcedure[]? 
+    // storedProcedureArray = (), int? maxItemCount = ()) returns @tainted stream<StoredProcedure>|error {
+    //     if(continuationHeader is string){
+    //         request.setHeader(CONTINUATION_HEADER, continuationHeader);
+    //     }
+    //     var response = self.azureCosmosClient->get(path, request);
+    //     stream<StoredProcedure> storedProcedureStream  = [].toStream();
+    //     [json, Headers] jsonresponse = check mapResponseToTuple(response);
+    //     json payload;
+    //     Headers headers;
+    //     [payload,headers] = jsonresponse;
+    //     StoredProcedure[] storedProcedures = storedProcedureArray == ()? []:<StoredProcedure[]>storedProcedureArray;
+    //     if(payload.StoredProcedures is json){
+    //         StoredProcedure[] finalArray = convertToStoredProcedureArray(storedProcedures, <json[]>payload.StoredProcedures);
+    //         storedProcedureStream = (<@untainted>finalArray).toStream();
+    //         if(headers?.continuationHeader != () && finalArray.length() == maxItemCount){            
+    //             storedProcedureStream = check self.retrieveStoredProcedures(path, request, headers.continuationHeader,finalArray);
+    //         }
+    //     }
+    //     return storedProcedureStream;
+    // }
 
-    # Delete a stored procedure inside a collection
-    # + properties - object of type ResourceProperties
-    # + storedProcedureId - id of the stored procedure to delete
-    # + return - If successful, returns boolean specifying 'true' if delete is sucessful. Else returns error. 
-    public remote function deleteStoredProcedure(@tainted ResourceProperties properties, string storedProcedureId) returns 
-    @tainted boolean|error {
-        http:Request request = new;
-        string requestPath =  prepareUrl([RESOURCE_PATH_DATABASES, properties.databaseId, RESOURCE_PATH_COLLECTIONS, 
-        properties.containerId, RESOURCE_PATH_STORED_POCEDURES, storedProcedureId]);        
-        HeaderParameters header = mapParametersToHeaderType(DELETE, requestPath);
-        request = check setHeaders(request, self.host, self.keyOrResourceToken, self.keyType, self.tokenVersion, header);
-        var response = self.azureCosmosClient->delete(requestPath, request);
-        return check getDeleteResponse(response);
-    }
+    // # Delete a stored procedure inside a collection
+    // # + properties - object of type ResourceProperties
+    // # + storedProcedureId - id of the stored procedure to delete
+    // # + return - If successful, returns boolean specifying 'true' if delete is sucessful. Else returns error. 
+    // public remote function deleteStoredProcedure(@tainted ResourceProperties properties, string storedProcedureId) returns 
+    // @tainted boolean|error {
+    //     http:Request request = new;
+    //     string requestPath =  prepareUrl([RESOURCE_PATH_DATABASES, properties.databaseId, RESOURCE_PATH_COLLECTIONS, 
+    //     properties.containerId, RESOURCE_PATH_STORED_POCEDURES, storedProcedureId]);        
+    //     HeaderParameters header = mapParametersToHeaderType(DELETE, requestPath);
+    //     request = check setHeaders(request, self.host, self.keyOrResourceToken, self.keyType, self.tokenVersion, header);
+    //     var response = self.azureCosmosClient->delete(requestPath, request);
+    //     return check getDeleteResponse(response);
+    // }
 
-    # Execute a stored procedure inside a collection
-    # ***********function only works correctly for string parameters************
-    # + properties - object of type ResourceProperties
-    # + storedProcedureId - id of the stored procedure to execute
-    # + parameters - The list of function paramaters to pass to javascript function as an array.
-    # + return - If successful, returns json with the output from the executed funxtion. Else returns error. 
-    public remote function executeStoredProcedure(@tainted ResourceProperties properties, string storedProcedureId, 
-    any[]? parameters) returns @tainted json|error {
-        http:Request request = new;
-        string requestPath =  prepareUrl([RESOURCE_PATH_DATABASES, properties.databaseId, RESOURCE_PATH_COLLECTIONS, 
-        properties.containerId, RESOURCE_PATH_STORED_POCEDURES, storedProcedureId]);       
-        HeaderParameters header = mapParametersToHeaderType(POST, requestPath);
-        request = check setHeaders(request, self.host, self.keyOrResourceToken, self.keyType, self.tokenVersion, header);
-        request.setTextPayload(parameters.toString());
-        var response = self.azureCosmosClient->post(requestPath, request);
-        json jsonreponse = check mapResponseToJson(response);
-        return jsonreponse;   
-    }
+    // # Execute a stored procedure inside a collection
+    // # ***********function only works correctly for string parameters************
+    // # + properties - object of type ResourceProperties
+    // # + storedProcedureId - id of the stored procedure to execute
+    // # + parameters - The list of function paramaters to pass to javascript function as an array.
+    // # + return - If successful, returns json with the output from the executed funxtion. Else returns error. 
+    // public remote function executeStoredProcedure(@tainted ResourceProperties properties, string storedProcedureId, 
+    // any[]? parameters) returns @tainted json|error {
+    //     http:Request request = new;
+    //     string requestPath =  prepareUrl([RESOURCE_PATH_DATABASES, properties.databaseId, RESOURCE_PATH_COLLECTIONS, 
+    //     properties.containerId, RESOURCE_PATH_STORED_POCEDURES, storedProcedureId]);       
+    //     HeaderParameters header = mapParametersToHeaderType(POST, requestPath);
+    //     request = check setHeaders(request, self.host, self.keyOrResourceToken, self.keyType, self.tokenVersion, header);
+    //     request.setTextPayload(parameters.toString());
+    //     var response = self.azureCosmosClient->post(requestPath, request);
+    //     json jsonreponse = check mapResponseToJson(response);
+    //     return jsonreponse;   
+    // }
 
-    # Create a new user defined function inside a collection
-    # A user-defined function (UDF) is a side effect free piece of application logic written in JavaScript. 
-    # + properties - object of type ResourceProperties
-    # + userDefinedFunction - object of type UserDefinedFunction
-    # + return - If successful, returns a UserDefinedFunction. Else returns error. 
-    public remote function createUserDefinedFunction(@tainted ResourceProperties properties, 
-    UserDefinedFunction userDefinedFunction) returns @tainted UserDefinedFunction|error {
-        http:Request request = new;
-        string requestPath =  prepareUrl([RESOURCE_PATH_DATABASES, properties.databaseId, RESOURCE_PATH_COLLECTIONS, 
-        properties.containerId, RESOURCE_PATH_UDF]);       
-        HeaderParameters header = mapParametersToHeaderType(POST, requestPath);
-        request = check setHeaders(request, self.host, self.keyOrResourceToken, self.keyType, self.tokenVersion, header);
-        request.setJsonPayload(<json>userDefinedFunction.cloneWithType(json));
-        var response = self.azureCosmosClient->post(requestPath, request);
-        [json, Headers] jsonResponse = check mapResponseToTuple(response);
-        return mapJsonToUserDefinedFunctionType(jsonResponse);      
-    }
+    // # Create a new user defined function inside a collection
+    // # A user-defined function (UDF) is a side effect free piece of application logic written in JavaScript. 
+    // # + properties - object of type ResourceProperties
+    // # + userDefinedFunction - object of type UserDefinedFunction
+    // # + return - If successful, returns a UserDefinedFunction. Else returns error. 
+    // public remote function createUserDefinedFunction(@tainted ResourceProperties properties, 
+    // UserDefinedFunction userDefinedFunction) returns @tainted UserDefinedFunction|error {
+    //     http:Request request = new;
+    //     string requestPath =  prepareUrl([RESOURCE_PATH_DATABASES, properties.databaseId, RESOURCE_PATH_COLLECTIONS, 
+    //     properties.containerId, RESOURCE_PATH_UDF]);       
+    //     HeaderParameters header = mapParametersToHeaderType(POST, requestPath);
+    //     request = check setHeaders(request, self.host, self.keyOrResourceToken, self.keyType, self.tokenVersion, header);
+    //     request.setJsonPayload(<json>userDefinedFunction.cloneWithType(json));
+    //     var response = self.azureCosmosClient->post(requestPath, request);
+    //     [json, Headers] jsonResponse = check mapResponseToTuple(response);
+    //     return mapJsonToUserDefinedFunctionType(jsonResponse);      
+    // }
 
-    # Replace an existing user defined function inside a collection
-    # + properties - object of type ResourceProperties
-    # + userDefinedFunction - object of type UserDefinedFunction
-    # + return - If successful, returns a UserDefinedFunction. Else returns error. 
-    public remote function replaceUserDefinedFunction(@tainted ResourceProperties properties, 
-    @tainted UserDefinedFunction userDefinedFunction) returns @tainted UserDefinedFunction|error {
-        http:Request request = new;
-        string requestPath =  prepareUrl([RESOURCE_PATH_DATABASES, properties.databaseId, RESOURCE_PATH_COLLECTIONS, 
-        properties.containerId, RESOURCE_PATH_UDF, userDefinedFunction.id]);      
-        HeaderParameters header = mapParametersToHeaderType(PUT, requestPath);
-        request = check setHeaders(request, self.host, self.keyOrResourceToken, self.keyType, self.tokenVersion, header);
-        request.setJsonPayload(<@untainted><json>userDefinedFunction.cloneWithType(json));
-        var response = self.azureCosmosClient->put(requestPath, request);
-        [json, Headers] jsonResponse = check mapResponseToTuple(response);
-        return mapJsonToUserDefinedFunctionType(jsonResponse);      
-    }
+    // # Replace an existing user defined function inside a collection
+    // # + properties - object of type ResourceProperties
+    // # + userDefinedFunction - object of type UserDefinedFunction
+    // # + return - If successful, returns a UserDefinedFunction. Else returns error. 
+    // public remote function replaceUserDefinedFunction(@tainted ResourceProperties properties, 
+    // @tainted UserDefinedFunction userDefinedFunction) returns @tainted UserDefinedFunction|error {
+    //     http:Request request = new;
+    //     string requestPath =  prepareUrl([RESOURCE_PATH_DATABASES, properties.databaseId, RESOURCE_PATH_COLLECTIONS, 
+    //     properties.containerId, RESOURCE_PATH_UDF, userDefinedFunction.id]);      
+    //     HeaderParameters header = mapParametersToHeaderType(PUT, requestPath);
+    //     request = check setHeaders(request, self.host, self.keyOrResourceToken, self.keyType, self.tokenVersion, header);
+    //     request.setJsonPayload(<@untainted><json>userDefinedFunction.cloneWithType(json));
+    //     var response = self.azureCosmosClient->put(requestPath, request);
+    //     [json, Headers] jsonResponse = check mapResponseToTuple(response);
+    //     return mapJsonToUserDefinedFunctionType(jsonResponse);      
+    // }
 
-    # Get a list of existing user defined functions inside a collection
-    # + properties - object of type ResourceProperties
-    # + maxItemCount - 
-    # + return - If successful, returns a UserDefinedFunctionList. Else returns error. 
-    public remote function listUserDefinedFunctions(@tainted ResourceProperties properties, int? maxItemCount = ()) returns @tainted 
-    stream<UserDefinedFunction>|error {
-        http:Request request = new;
-        string requestPath =  prepareUrl([RESOURCE_PATH_DATABASES, properties.databaseId, RESOURCE_PATH_COLLECTIONS, 
-        properties.containerId, RESOURCE_PATH_UDF]);
-        HeaderParameters header = mapParametersToHeaderType(GET, requestPath);
-        request = check setHeaders(request, self.host, self.keyOrResourceToken, self.keyType, self.tokenVersion, header);
-        if(maxItemCount is int){
-            request.setHeader(MAX_ITEM_COUNT_HEADER, maxItemCount.toString()); 
-        }
-        stream<UserDefinedFunction> storedProcedureStream = check self.retrieveUserDefinedFunctions(requestPath, request);
-        return storedProcedureStream;   
-    }
+    // # Get a list of existing user defined functions inside a collection
+    // # + properties - object of type ResourceProperties
+    // # + maxItemCount - 
+    // # + return - If successful, returns a UserDefinedFunctionList. Else returns error. 
+    // public remote function listUserDefinedFunctions(@tainted ResourceProperties properties, int? maxItemCount = ()) returns @tainted 
+    // stream<UserDefinedFunction>|error {
+    //     http:Request request = new;
+    //     string requestPath =  prepareUrl([RESOURCE_PATH_DATABASES, properties.databaseId, RESOURCE_PATH_COLLECTIONS, 
+    //     properties.containerId, RESOURCE_PATH_UDF]);
+    //     HeaderParameters header = mapParametersToHeaderType(GET, requestPath);
+    //     request = check setHeaders(request, self.host, self.keyOrResourceToken, self.keyType, self.tokenVersion, header);
+    //     if(maxItemCount is int){
+    //         request.setHeader(MAX_ITEM_COUNT_HEADER, maxItemCount.toString()); 
+    //     }
+    //     stream<UserDefinedFunction> storedProcedureStream = check self.retrieveUserDefinedFunctions(requestPath, request);
+    //     return storedProcedureStream;   
+    // }
 
-    private function retrieveUserDefinedFunctions(string path, http:Request request, string? continuationHeader = (), UserDefinedFunction[]? 
-    storedProcedureArray = (), int? maxItemCount = ()) returns @tainted stream<UserDefinedFunction>|error {
-        if(continuationHeader is string){
-            request.setHeader(CONTINUATION_HEADER, continuationHeader);
-        }
-        var response = self.azureCosmosClient->get(path, request);
-        stream<StoredProcedure> storedProcedureStream  = [].toStream();
-        [json, Headers] jsonresponse = check mapResponseToTuple(response);
-        json payload;
-        Headers headers;
-        [payload,headers] = jsonresponse;
-        UserDefinedFunction[] storedProcedures = storedProcedureArray == ()? []:<UserDefinedFunction[]>storedProcedureArray;
-        if(payload.UserDefinedFunctions is json){
-            UserDefinedFunction[] finalArray = convertsToUserDefinedFunctionArray(storedProcedures, <json[]>payload.UserDefinedFunctions);
-            storedProcedureStream = (<@untainted>finalArray).toStream();
-            if(headers?.continuationHeader != () && finalArray.length() == maxItemCount){            
-                storedProcedureStream = check self.retrieveUserDefinedFunctions(path, request, headers.continuationHeader,finalArray);
-            }
-        }
-        return storedProcedureStream;
-    }
+    // private function retrieveUserDefinedFunctions(string path, http:Request request, string? continuationHeader = (), UserDefinedFunction[]? 
+    // storedProcedureArray = (), int? maxItemCount = ()) returns @tainted stream<UserDefinedFunction>|error {
+    //     if(continuationHeader is string){
+    //         request.setHeader(CONTINUATION_HEADER, continuationHeader);
+    //     }
+    //     var response = self.azureCosmosClient->get(path, request);
+    //     stream<StoredProcedure> storedProcedureStream  = [].toStream();
+    //     [json, Headers] jsonresponse = check mapResponseToTuple(response);
+    //     json payload;
+    //     Headers headers;
+    //     [payload,headers] = jsonresponse;
+    //     UserDefinedFunction[] storedProcedures = storedProcedureArray == ()? []:<UserDefinedFunction[]>storedProcedureArray;
+    //     if(payload.UserDefinedFunctions is json){
+    //         UserDefinedFunction[] finalArray = convertsToUserDefinedFunctionArray(storedProcedures, <json[]>payload.UserDefinedFunctions);
+    //         storedProcedureStream = (<@untainted>finalArray).toStream();
+    //         if(headers?.continuationHeader != () && finalArray.length() == maxItemCount){            
+    //             storedProcedureStream = check self.retrieveUserDefinedFunctions(path, request, headers.continuationHeader,finalArray);
+    //         }
+    //     }
+    //     return storedProcedureStream;
+    // }
 
-    # Delete an existing user defined function inside a collection
-    # + properties - object of type ResourceProperties
-    # + userDefinedFunctionid - id of UDF to delete
-    # + return - If successful, returns boolean specifying 'true' if delete is sucessful. Else returns error. 
-    public remote function deleteUserDefinedFunction(@tainted ResourceProperties properties, string userDefinedFunctionid) 
-    returns @tainted boolean|error {
-        http:Request request = new;
-        string requestPath =  prepareUrl([RESOURCE_PATH_DATABASES, properties.databaseId, RESOURCE_PATH_COLLECTIONS, 
-        properties.containerId, RESOURCE_PATH_UDF, userDefinedFunctionid]);        
-        HeaderParameters header = mapParametersToHeaderType(DELETE, requestPath);
-        request = check setHeaders(request, self.host, self.keyOrResourceToken, self.keyType, self.tokenVersion, header);
-        var response = self.azureCosmosClient->delete(requestPath, request);
-        return check getDeleteResponse(response);
-    }
+    // # Delete an existing user defined function inside a collection
+    // # + properties - object of type ResourceProperties
+    // # + userDefinedFunctionid - id of UDF to delete
+    // # + return - If successful, returns boolean specifying 'true' if delete is sucessful. Else returns error. 
+    // public remote function deleteUserDefinedFunction(@tainted ResourceProperties properties, string userDefinedFunctionid) 
+    // returns @tainted boolean|error {
+    //     http:Request request = new;
+    //     string requestPath =  prepareUrl([RESOURCE_PATH_DATABASES, properties.databaseId, RESOURCE_PATH_COLLECTIONS, 
+    //     properties.containerId, RESOURCE_PATH_UDF, userDefinedFunctionid]);        
+    //     HeaderParameters header = mapParametersToHeaderType(DELETE, requestPath);
+    //     request = check setHeaders(request, self.host, self.keyOrResourceToken, self.keyType, self.tokenVersion, header);
+    //     var response = self.azureCosmosClient->delete(requestPath, request);
+    //     return check getDeleteResponse(response);
+    // }
 
-    # Create a trigger inside a collection
-    # Triggers are pieces of application logic that can be executed before (pre-triggers) and after (post-triggers) 
-    # creation, deletion, and replacement of a document. Triggers are written in JavaScript. 
-    # + properties - object of type ResourceProperties
-    # + trigger - object of type Trigger
-    # + return - If successful, returns a Trigger. Else returns error. 
-    public remote function createTrigger(@tainted ResourceProperties properties, Trigger trigger) returns @tainted 
-    Trigger|error {
-        http:Request request = new;
-        string requestPath =  prepareUrl([RESOURCE_PATH_DATABASES, properties.databaseId, RESOURCE_PATH_COLLECTIONS, 
-        properties.containerId, RESOURCE_PATH_TRIGGER]);       
-        HeaderParameters header = mapParametersToHeaderType(POST, requestPath);
-        request = check setHeaders(request, self.host, self.keyOrResourceToken, self.keyType, self.tokenVersion, header);
-        request.setJsonPayload(<json>trigger.cloneWithType(json));
-        var response = self.azureCosmosClient->post(requestPath, request);
-        [json, Headers] jsonResponse = check mapResponseToTuple(response);
-        return mapJsonToTriggerType(jsonResponse);      
-    }
+    // # Create a trigger inside a collection
+    // # Triggers are pieces of application logic that can be executed before (pre-triggers) and after (post-triggers) 
+    // # creation, deletion, and replacement of a document. Triggers are written in JavaScript. 
+    // # + properties - object of type ResourceProperties
+    // # + trigger - object of type Trigger
+    // # + return - If successful, returns a Trigger. Else returns error. 
+    // public remote function createTrigger(@tainted ResourceProperties properties, Trigger trigger) returns @tainted 
+    // Trigger|error {
+    //     http:Request request = new;
+    //     string requestPath =  prepareUrl([RESOURCE_PATH_DATABASES, properties.databaseId, RESOURCE_PATH_COLLECTIONS, 
+    //     properties.containerId, RESOURCE_PATH_TRIGGER]);       
+    //     HeaderParameters header = mapParametersToHeaderType(POST, requestPath);
+    //     request = check setHeaders(request, self.host, self.keyOrResourceToken, self.keyType, self.tokenVersion, header);
+    //     request.setJsonPayload(<json>trigger.cloneWithType(json));
+    //     var response = self.azureCosmosClient->post(requestPath, request);
+    //     [json, Headers] jsonResponse = check mapResponseToTuple(response);
+    //     return mapJsonToTriggerType(jsonResponse);      
+    // }
     
-    # Replace an existing trigger inside a collection
-    # + properties - object of type ResourceProperties
-    # + trigger - object of type Trigger
-    # + return - If successful, returns a Trigger. Else returns error. 
-    public remote function replaceTrigger(@tainted ResourceProperties properties, @tainted Trigger trigger) returns 
-    @tainted Trigger|error {
-        http:Request request = new;
-        string requestPath =  prepareUrl([RESOURCE_PATH_DATABASES, properties.databaseId, RESOURCE_PATH_COLLECTIONS, 
-        properties.containerId, RESOURCE_PATH_TRIGGER, trigger.id]);       
-        HeaderParameters header = mapParametersToHeaderType(PUT, requestPath);
-        request = check setHeaders(request, self.host, self.keyOrResourceToken, self.keyType, self.tokenVersion, header);
-        request.setJsonPayload(<@untainted><json>trigger.cloneWithType(json));
-        var response = self.azureCosmosClient->put(requestPath, request);
-        [json, Headers] jsonResponse = check mapResponseToTuple(response);
-        return mapJsonToTriggerType(jsonResponse); 
-    }
+    // # Replace an existing trigger inside a collection
+    // # + properties - object of type ResourceProperties
+    // # + trigger - object of type Trigger
+    // # + return - If successful, returns a Trigger. Else returns error. 
+    // public remote function replaceTrigger(@tainted ResourceProperties properties, @tainted Trigger trigger) returns 
+    // @tainted Trigger|error {
+    //     http:Request request = new;
+    //     string requestPath =  prepareUrl([RESOURCE_PATH_DATABASES, properties.databaseId, RESOURCE_PATH_COLLECTIONS, 
+    //     properties.containerId, RESOURCE_PATH_TRIGGER, trigger.id]);       
+    //     HeaderParameters header = mapParametersToHeaderType(PUT, requestPath);
+    //     request = check setHeaders(request, self.host, self.keyOrResourceToken, self.keyType, self.tokenVersion, header);
+    //     request.setJsonPayload(<@untainted><json>trigger.cloneWithType(json));
+    //     var response = self.azureCosmosClient->put(requestPath, request);
+    //     [json, Headers] jsonResponse = check mapResponseToTuple(response);
+    //     return mapJsonToTriggerType(jsonResponse); 
+    // }
 
-    # List existing triggers inside a collection
-    # + properties - object of type ResourceProperties
-    # + maxItemCount -
-    # + return - If successful, returns a TriggerList. Else returns error. 
-    public remote function listTriggers(@tainted ResourceProperties properties, int? maxItemCount = ()) returns @tainted stream<Trigger>|error {
-        http:Request request = new;
-        string requestPath =  prepareUrl([RESOURCE_PATH_DATABASES, properties.databaseId, RESOURCE_PATH_COLLECTIONS, 
-        properties.containerId, RESOURCE_PATH_TRIGGER]);
-        HeaderParameters header = mapParametersToHeaderType(GET, requestPath);
-        request = check setHeaders(request, self.host, self.keyOrResourceToken, self.keyType, self.tokenVersion, header);
-        if(maxItemCount is int){
-            request.setHeader(MAX_ITEM_COUNT_HEADER, maxItemCount.toString()); 
-        }
-        stream<Trigger> storedProcedureStream = check self.retrieveTriggers(requestPath, request);
-        return storedProcedureStream;       
-    }
+    // # List existing triggers inside a collection
+    // # + properties - object of type ResourceProperties
+    // # + maxItemCount -
+    // # + return - If successful, returns a TriggerList. Else returns error. 
+    // public remote function listTriggers(@tainted ResourceProperties properties, int? maxItemCount = ()) returns @tainted stream<Trigger>|error {
+    //     http:Request request = new;
+    //     string requestPath =  prepareUrl([RESOURCE_PATH_DATABASES, properties.databaseId, RESOURCE_PATH_COLLECTIONS, 
+    //     properties.containerId, RESOURCE_PATH_TRIGGER]);
+    //     HeaderParameters header = mapParametersToHeaderType(GET, requestPath);
+    //     request = check setHeaders(request, self.host, self.keyOrResourceToken, self.keyType, self.tokenVersion, header);
+    //     if(maxItemCount is int){
+    //         request.setHeader(MAX_ITEM_COUNT_HEADER, maxItemCount.toString()); 
+    //     }
+    //     stream<Trigger> storedProcedureStream = check self.retrieveTriggers(requestPath, request);
+    //     return storedProcedureStream;       
+    // }
 
 
-    private function retrieveTriggers(string path, http:Request request, string? continuationHeader = (), Trigger[]? 
-    storedProcedureArray = (), int? maxItemCount = ()) returns @tainted stream<Trigger>|error {
-        if(continuationHeader is string){
-            request.setHeader(CONTINUATION_HEADER, continuationHeader);
-        }
-        var response = self.azureCosmosClient->get(path, request);
-        stream<Trigger> storedProcedureStream  = [].toStream();
-        [json, Headers] jsonresponse = check mapResponseToTuple(response);
-        json payload;
-        Headers headers;
-        [payload,headers] = jsonresponse;
-        Trigger[] storedProcedures = storedProcedureArray == ()? []:<Trigger[]>storedProcedureArray;
-        if(payload.Triggers is json){
-            Trigger[] finalArray = convertToTriggerArray(storedProcedures, <json[]>payload.Triggers);
-            storedProcedureStream = (<@untainted>finalArray).toStream();
-            if(headers?.continuationHeader != () && finalArray.length() == maxItemCount){            
-                storedProcedureStream = check self.retrieveTriggers(path, request, headers.continuationHeader,finalArray);
-            }
-        }
-        return storedProcedureStream;
-    }
+    // private function retrieveTriggers(string path, http:Request request, string? continuationHeader = (), Trigger[]? 
+    // storedProcedureArray = (), int? maxItemCount = ()) returns @tainted stream<Trigger>|error {
+    //     if(continuationHeader is string){
+    //         request.setHeader(CONTINUATION_HEADER, continuationHeader);
+    //     }
+    //     var response = self.azureCosmosClient->get(path, request);
+    //     stream<Trigger> storedProcedureStream  = [].toStream();
+    //     [json, Headers] jsonresponse = check mapResponseToTuple(response);
+    //     json payload;
+    //     Headers headers;
+    //     [payload,headers] = jsonresponse;
+    //     Trigger[] storedProcedures = storedProcedureArray == ()? []:<Trigger[]>storedProcedureArray;
+    //     if(payload.Triggers is json){
+    //         Trigger[] finalArray = convertToTriggerArray(storedProcedures, <json[]>payload.Triggers);
+    //         storedProcedureStream = (<@untainted>finalArray).toStream();
+    //         if(headers?.continuationHeader != () && finalArray.length() == maxItemCount){            
+    //             storedProcedureStream = check self.retrieveTriggers(path, request, headers.continuationHeader,finalArray);
+    //         }
+    //     }
+    //     return storedProcedureStream;
+    // }
 
-    # Delete an existing trigger inside a collection
-    # + properties - object of type ResourceProperties
-    # + triggerId - id of the trigger to be deleted
-    # + return - If successful, returns boolean specifying 'true' if delete is sucessful. Else returns error. 
-    public remote function deleteTrigger(@tainted ResourceProperties properties, string triggerId) returns @tainted 
-    boolean|error {
-        http:Request request = new;
-        string requestPath =  prepareUrl([RESOURCE_PATH_DATABASES, properties.databaseId, RESOURCE_PATH_COLLECTIONS, 
-        properties.containerId, RESOURCE_PATH_TRIGGER, triggerId]);       
-        HeaderParameters header = mapParametersToHeaderType(DELETE, requestPath);
-        request = check setHeaders(request, self.host, self.keyOrResourceToken, self.keyType, self.tokenVersion, header);
-        var response = self.azureCosmosClient->delete(requestPath, request);
-        return check getDeleteResponse(response);
-    }
+    // # Delete an existing trigger inside a collection
+    // # + properties - object of type ResourceProperties
+    // # + triggerId - id of the trigger to be deleted
+    // # + return - If successful, returns boolean specifying 'true' if delete is sucessful. Else returns error. 
+    // public remote function deleteTrigger(@tainted ResourceProperties properties, string triggerId) returns @tainted 
+    // boolean|error {
+    //     http:Request request = new;
+    //     string requestPath =  prepareUrl([RESOURCE_PATH_DATABASES, properties.databaseId, RESOURCE_PATH_COLLECTIONS, 
+    //     properties.containerId, RESOURCE_PATH_TRIGGER, triggerId]);       
+    //     HeaderParameters header = mapParametersToHeaderType(DELETE, requestPath);
+    //     request = check setHeaders(request, self.host, self.keyOrResourceToken, self.keyType, self.tokenVersion, header);
+    //     var response = self.azureCosmosClient->delete(requestPath, request);
+    //     return check getDeleteResponse(response);
+    // }
 //----------------------------------------------------------------------------
     # Create a user in a database
     # + properties - object of type ResourceProperties

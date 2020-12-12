@@ -22,7 +22,7 @@ public type DatabaseResponse record {|
     Headers?...;
 |};
 
-public type Container record {|
+public type ContainerResponse record {|
     string id = "";
     *Common;
     string collections?;

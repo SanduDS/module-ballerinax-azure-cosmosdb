@@ -31,11 +31,11 @@ isolated function mapJsonToDatabaseType([json, Headers?] jsonPayload) returns Da
     return database;
 }
 
-isolated function mapJsonToContainerType([json, Headers?] jsonPayload) returns @tainted Container {
+isolated function mapJsonToContainerType([json, Headers?] jsonPayload) returns @tainted ContainerResponse {
     json payload;
     Headers? headers;
     [payload, headers] = jsonPayload;
-    Container container = {};
+    ContainerResponse container = {};
     container.id = payload.id.toString();
     container.resourceId = payload._rid != ()? payload._rid.toString() : EMPTY_STRING;
     container.selfReference = payload._self != ()? payload._self.toString() : EMPTY_STRING;
@@ -239,7 +239,7 @@ isolated function convertToDatabaseArray(@tainted DatabaseResponse[] databases, 
     return databases;
 }
 
-isolated function convertToContainerArray(@tainted Container[] containers, json[] sourceCollectionArrayJsonObject) returns @tainted Container[] {
+isolated function convertToContainerArray(@tainted ContainerResponse[] containers, json[] sourceCollectionArrayJsonObject) returns @tainted ContainerResponse[] {
     int length = containers.length();
     int i = length;   
     foreach json jsonCollection in sourceCollectionArrayJsonObject {

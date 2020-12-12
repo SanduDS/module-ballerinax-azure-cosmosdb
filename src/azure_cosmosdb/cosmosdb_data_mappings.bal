@@ -361,5 +361,3 @@ isolated function convertToStringArray(json[] sourceArrayJsonObject) returns @ta
     }
     return strings;
 }
-
-

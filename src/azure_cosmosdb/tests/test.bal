@@ -1049,7 +1049,7 @@ function test_createUser(){
         databaseId: database.id
     };
     string userId = string `user_${uuid.toString()}`;
-    var result = AzureCosmosClient->createUser(resourceProperty, userId);  
+    var result = db->createUser(userId);  
     if(result is User){
         test_user = <@untainted>result;
         io:println(result);
@@ -1071,7 +1071,7 @@ function test_replaceUserId(){
         databaseId: database.id
     };
     string replaceUser = test_user.id;
-    var result = AzureCosmosClient->replaceUserId(resourceProperty, replaceUser, newReplaceId);  
+    var result = db->replaceUserId(replaceUser, newReplaceId);  
     if(result is error){
         test:assertFail(msg = result.message());
     } else {
@@ -1092,7 +1092,7 @@ function test_getUser(){
         databaseId: database.id
     };
     string getUserId = test_user.id;
-    var result = AzureCosmosClient->getUser(resourceProperty, getUserId);  
+    var result = db->getUser(getUserId);  
     if(result is error){
         test:assertFail(msg = result.message());
     } else {
@@ -1111,7 +1111,7 @@ function test_listUsers(){
     @tainted ResourceProperties resourceProperty = {
         databaseId: database.id
     };
-    var result = AzureCosmosClient->listUsers(resourceProperty);  
+    var result = db->listUsers();  
     if(result is error){
         test:assertFail(msg = result.message());
     } else {
@@ -1137,7 +1137,7 @@ function test_deleteUser(){
     @tainted ResourceProperties resourceProperty = {
         databaseId: database.id
     };
-    var result = AzureCosmosClient->deleteUser(resourceProperty, deleteUserId);  
+    var result = db->deleteUser(deleteUserId);  
     if(result is error){
         test:assertFail(msg = result.message());
     } else {
@@ -1167,7 +1167,7 @@ function test_createPermission(){
         resourcePath: permissionResource
     };
 
-    var result = AzureCosmosClient->createPermission(resourceProperty, permissionUserId, createPermission);  
+    var result = db->createPermission(permissionUserId, createPermission);  
     if(result is Permission){
         permission = <@untainted>result;
         io:println(result);
@@ -1197,7 +1197,7 @@ function test_createPermissionWithTTL(){
         permissionMode: permissionMode, 
         resourcePath: permissionResource
     };
-    var result = AzureCosmosClient->createPermission(resourceProperty, permissionUserId, createPermission, validityPeriod);  
+    var result = db->createPermission(permissionUserId, createPermission, validityPeriod);  
     if(result is Permission){
         permission = <@untainted>result;
         io:println(result);
@@ -1225,7 +1225,7 @@ function test_replacePermission(){
         permissionMode: permissionMode, 
         resourcePath: permissionResource
     };
-    var result = AzureCosmosClient->replacePermission(resourceProperty, permissionUserId, replacePermission);  
+    var result = db->replacePermission(permissionUserId, replacePermission);  
     if(result is error){
         test:assertFail(msg = result.message());
     } else {
@@ -1245,7 +1245,7 @@ function test_listPermissions(){
         databaseId: database.id
     };
     string permissionUserId = test_user.id;
-    var result = AzureCosmosClient->listPermissions(resourceProperty, permissionUserId);  
+    var result = db->listPermissions(permissionUserId);  
     if(result is error){
         test:assertFail(msg = result.message());
     } else {
@@ -1267,7 +1267,7 @@ function test_getPermission(){
     };
     string permissionUserId = test_user.id;
     string permissionId = permission.id;
-    var result = AzureCosmosClient->getPermission(resourceProperty, permissionUserId, permissionId);  
+    var result = db->getPermission(permissionUserId, permissionId);  
     if(result is error){
         test:assertFail(msg = result.message());
     } else {
@@ -1288,7 +1288,7 @@ function test_deletePermission(){
     };
     string permissionUserId = test_user.id;
     string permissionId = permission.id;
-    var result = AzureCosmosClient->deletePermission(resourceProperty, permissionUserId, permissionId);  
+    var result = db->deletePermission(permissionUserId, permissionId);  
     if(result is error){
         test:assertFail(msg = result.message());
     } else {
@@ -1426,7 +1426,7 @@ function test_getCollection_Resource_Token(){
     };
     string permissionUserId = test_user.id;
     string permissionId = permission.id;
-    var result = AzureCosmosClient->getPermission(resourceProperty, permissionUserId, permissionId);  
+    var result = db->getPermission(permissionUserId, permissionId);  
     if(result is error){
         test:assertFail(msg = result.message());
     } else {

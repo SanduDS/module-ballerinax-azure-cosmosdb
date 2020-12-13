@@ -86,8 +86,8 @@ public  client class Client {
     }
 
     # List all databases inside a resource
+    # + maxItemCount - Optional integer parameter representing maximum item count.
     # + return - If successful, returns DatabaseList. else returns error. 
-    # + maxItemCount - 
     public remote function getDatabases(int? maxItemCount = ()) returns @tainted stream<DatabaseResponse>|error {
         if(self.keyType == TOKEN_TYPE_RESOURCE) {
             return prepareError(MASTER_KEY_ERROR);
@@ -99,11 +99,11 @@ public  client class Client {
         if(maxItemCount is int){
             request.setHeader(MAX_ITEM_COUNT_HEADER, maxItemCount.toString()); 
         }
-        stream<DatabaseResponse> databaseStream = check self.retrieveDatabases(requestPath, request);
+        stream<DatabaseResponse> databaseStream = check self.retrieveDatabases(requestPath, request, maxItemCount);
         return databaseStream;
     }
 
-    private function retrieveDatabases(string path, http:Request request, string? continuationHeader = (), DatabaseResponse[]? 
+    private function retrieveDatabases(string path, http:Request request, int? maxItemCount = (), string? continuationHeader = (), DatabaseResponse[]? 
     databaseArray = ()) returns @tainted stream<DatabaseResponse>|error {
         if(continuationHeader is string){
             request.setHeader(CONTINUATION_HEADER, continuationHeader);
@@ -115,8 +115,8 @@ public  client class Client {
         if(payload.Databases is json){
             DatabaseResponse[] finalArray = convertToDatabaseArray(databases, <json[]>payload.Databases);
             databaseStream = (<@untainted>finalArray).toStream();
-            if(headers?.continuationHeader != ()){            
-                databaseStream = check self.retrieveDatabases(path, request, headers.continuationHeader, finalArray);
+            if(headers?.continuationHeader != () && maxItemCount is ()){            
+                databaseStream = check self.retrieveDatabases(path, request, (), headers.continuationHeader, finalArray);
             }
         }
         return databaseStream;
@@ -141,7 +141,7 @@ public  client class Client {
     # Each Azure Cosmos DB collection is provisioned with an associated performance level represented as an 
     # Offer resource in the REST model. Azure Cosmos DB supports offers representing both user-defined performance 
     # levels and pre-defined performance levels. 
-    # + maxItemCount - 
+    # + maxItemCount - Optional integer parameter representing maximum item count.
     # + return - If successful, returns a OfferList. Else returns error.
     public remote function listOffers(int? maxItemCount = ()) returns @tainted stream<Offer>|error {
         http:Request request = new;
@@ -151,12 +151,12 @@ public  client class Client {
         if(maxItemCount is int){
             request.setHeader(MAX_ITEM_COUNT_HEADER, maxItemCount.toString()); 
         }
-        stream<Offer> storedProcedureStream = check self.retriveOffers(requestPath, request);
+        stream<Offer> storedProcedureStream = check self.retriveOffers(requestPath, request, maxItemCount);
         return storedProcedureStream;
     }
 
-    private function retriveOffers(string path, http:Request request, string? continuationHeader = (), Offer[]? 
-    storedProcedureArray = (), int? maxItemCount = ()) returns @tainted stream<Offer>|error {
+    private function retriveOffers(string path, http:Request request, int? maxItemCount = (),string? continuationHeader = (), Offer[]? 
+    storedProcedureArray = ()) returns @tainted stream<Offer>|error {
         if(continuationHeader is string){
             request.setHeader(CONTINUATION_HEADER, continuationHeader);
         }
@@ -167,8 +167,8 @@ public  client class Client {
         if(payload.Offers is json){
             Offer[] finalArray = ConvertToOfferArray(storedProcedures, <json[]>payload.Offers);
             storedProcedureStream = (<@untainted>finalArray).toStream();
-            if(headers?.continuationHeader != () && finalArray.length() == maxItemCount){            
-                storedProcedureStream = check self.retriveOffers(path, request, headers.continuationHeader,finalArray);
+            if(headers?.continuationHeader != () && maxItemCount is ()){            
+                storedProcedureStream = check self.retriveOffers(path, request, (), headers.continuationHeader,finalArray);
             }
         }// handle else
         return storedProcedureStream;
@@ -189,7 +189,7 @@ public  client class Client {
 
     # Replace an existing offer
     # + offer - an object of type Offer
-    # + offerType - 
+    # + offerType - Optional parameter offer type 
     # + return - If successful, returns a Offer. Else returns error.
     public remote function replaceOffer(Offer offer, string? offerType = ()) returns @tainted Offer|error {
         http:Request request = new;

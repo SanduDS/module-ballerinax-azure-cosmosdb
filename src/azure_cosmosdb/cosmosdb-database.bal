@@ -75,7 +75,7 @@ public client class Database  {
     }
 
     # List all collections inside a database
-    # + maxItemCount - 
+    # + maxItemCount - Optional integer parameter representing maximum item count.
     # + return - If successful, returns ContainerList. Else returns error.  
     public remote function getAllContainers(int? maxItemCount = ()) returns @tainted stream<ContainerResponse>|error {
         http:Request request = new;
@@ -85,12 +85,12 @@ public client class Database  {
         if(maxItemCount is int){
             request.setHeader(MAX_ITEM_COUNT_HEADER, maxItemCount.toString()); 
         }
-        stream<ContainerResponse> containerStream = check self.retrieveContainers(requestPath, request);
+        stream<ContainerResponse> containerStream = check self.retrieveContainers(requestPath, request, maxItemCount);
         return containerStream;
     }
 
-    private function retrieveContainers(string path, http:Request request, string? continuationHeader = (), ContainerResponse[]? 
-    containerArray = (), int? maxItemCount = ()) returns @tainted stream<ContainerResponse>|error {
+    private function retrieveContainers(string path, http:Request request, int? maxItemCount = (), string? continuationHeader = (), ContainerResponse[]? 
+    containerArray = ()) returns @tainted stream<ContainerResponse>|error {
         if(continuationHeader is string){
             request.setHeader(CONTINUATION_HEADER, continuationHeader);
         }
@@ -101,8 +101,8 @@ public client class Database  {
         if(payload.DocumentCollections is json){
             ContainerResponse[] finalArray = convertToContainerArray(containers, <json[]>payload.DocumentCollections);
             containerStream = (<@untainted>finalArray).toStream();
-            if(headers?.continuationHeader != () && finalArray.length() == maxItemCount){            
-                containerStream = check self.retrieveContainers(path, request, headers.continuationHeader,finalArray);
+            if(headers?.continuationHeader != () && maxItemCount is ()){            
+                containerStream = check self.retrieveContainers(path, request, (), headers.continuationHeader, finalArray);
             }
         }
         return containerStream;
@@ -187,7 +187,7 @@ public client class Database  {
     }
 
     # Lists users in a database account
-    # + maxItemCount -
+    # + maxItemCount - Optional integer parameter representing maximum item count.
     # + return - If successful, returns a UserList. Else returns error.
     public remote function listUsers(int? maxItemCount = ()) returns @tainted stream<User>|error {
         http:Request request = new;
@@ -197,12 +197,12 @@ public client class Database  {
         if(maxItemCount is int){
             request.setHeader(MAX_ITEM_COUNT_HEADER, maxItemCount.toString()); 
         }
-        stream<User> storedProcedureStream = check self.retrieveUsers(requestPath, request);
+        stream<User> storedProcedureStream = check self.retrieveUsers(requestPath, request, maxItemCount);
         return storedProcedureStream;       
     }
 
-    private function retrieveUsers(string path, http:Request request, string? continuationHeader = (), User[]? 
-    storedProcedureArray = (), int? maxItemCount = ()) returns @tainted stream<User>|error {
+    private function retrieveUsers(string path, http:Request request, int? maxItemCount = (),string? continuationHeader = (), User[]? 
+    storedProcedureArray = ()) returns @tainted stream<User>|error {
         if(continuationHeader is string){
             request.setHeader(CONTINUATION_HEADER, continuationHeader);
         }
@@ -213,8 +213,8 @@ public client class Database  {
         if(payload.Users is json){
             User[] finalArray = convertToUserArray(storedProcedures, <json[]>payload.Users);
             storedProcedureStream = (<@untainted>finalArray).toStream();
-            if(headers?.continuationHeader != () && finalArray.length() == maxItemCount){            
-                storedProcedureStream = check self.retrieveUsers(path, request, headers.continuationHeader,finalArray);
+            if(headers?.continuationHeader != () && maxItemCount is ()){            
+                storedProcedureStream = check self.retrieveUsers(path, request, (), headers.continuationHeader, finalArray);
             }
         }// handle else
         return storedProcedureStream;
@@ -291,7 +291,7 @@ public client class Database  {
 
     # Lists permissions belong to a user
     # + userId - the id of user to the permissions belong
-    # + maxItemCount -
+    # + maxItemCount - Optional integer parameter representing maximum item count.
     # + return - If successful, returns a PermissionList. Else returns error.
     public remote function listPermissions(string userId, int? maxItemCount = ()) returns @tainted 
     stream<Permission>|error {
@@ -303,12 +303,12 @@ public client class Database  {
         if(maxItemCount is int){
             request.setHeader(MAX_ITEM_COUNT_HEADER, maxItemCount.toString()); 
         }
-        stream<Permission> storedProcedureStream = check self.retrievePermissions(requestPath, request);
+        stream<Permission> storedProcedureStream = check self.retrievePermissions(requestPath, request, maxItemCount);
         return storedProcedureStream;
     }
 
-    private function retrievePermissions(string path, http:Request request, string? continuationHeader = (), Permission[]? 
-    storedProcedureArray = (), int? maxItemCount = ()) returns @tainted stream<Permission>|error {
+    private function retrievePermissions(string path, http:Request request, int? maxItemCount = (), string? continuationHeader = (), Permission[]? 
+    storedProcedureArray = ()) returns @tainted stream<Permission>|error {
         if(continuationHeader is string){
             request.setHeader(CONTINUATION_HEADER, continuationHeader);
         }
@@ -319,8 +319,8 @@ public client class Database  {
         if(payload.Permissions is json){
             Permission[] finalArray = convertToPermissionArray(storedProcedures, <json[]>payload.Permissions);
             storedProcedureStream = (<@untainted>finalArray).toStream();
-            if(headers?.continuationHeader != () && finalArray.length() == maxItemCount){            
-                storedProcedureStream = check self.retrievePermissions(path, request, headers.continuationHeader,finalArray);
+            if(headers?.continuationHeader != () && maxItemCount is ()){            
+                storedProcedureStream = check self.retrievePermissions(path, request, (), headers.continuationHeader, finalArray);
             }
         }// handle else
         return storedProcedureStream;

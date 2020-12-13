@@ -56,52 +56,47 @@ public function main() {
 
     azure_cosmosdb:Client azureCosmosClient = new(config);
 
-    Database database1 = azureCosmosClient->createDatabase("mydatabase");
+    DatabaseResponse databaseResponse = azureCosmosClient->createDatabase("mydatabase");
+    Database database = new(databaseResponse.id,config);
 
-    @tainted ResourceProperties propertiesNewCollection = {
-            databaseId: database1.id,
-            containerId: "mycontainer"
-    };
     PartitionKey pk = {
         paths: ["/AccountNumber"],
         kind :"Hash",
         'version: 2
     };
-    Container container1 = azureCosmosClient->createContainer(propertiesNewCollection,pk);
 
-    @tainted ResourceProperties properties = {
-            databaseId: database1.id,
-            containerId: container1.id
-    };
+    ContainerResponse containerResponse = database->createContainer(pk);
+    Container container = new(databaseResponse.id, containerResponse.id,config);
+
     Document document1 = { id: "documentid1", documentBody :{ "LastName": "Sheldon", "AccountNumber": 1234 }, partitionKey : [1234] };
     Document document2 = { id: "documentid2", documentBody :{ "LastName": "West", "AccountNumber": 7805 }, partitionKey : [7805] };
     Document document3 = { id: "documentid3", documentBody :{ "LastName": "Moore", "AccountNumber": 5678 }, partitionKey : [5678] };
     Document document4 = { id: "documentid4", documentBody :{ "LastName": "Hope", "AccountNumber": 2343 }, partitionKey : [2343] };
 
     log:printInfo("------------------ Inserting Documents -------------------");
-    var output1 = azureCosmosClient->createDocument(properties, document1);
-    var output2 = azureCosmosClient->createDocument(properties, document2);
-    var output3 = azureCosmosClient->createDocument(properties, document3);
-    var output4 = azureCosmosClient->createDocument(properties, document4);
+    var output1 = container->createDocument(document1);
+    var output2 = container->createDocument(document2);
+    var output3 = container->createDocument(document3);
+    var output4 = container->createDocument(document4);
 
     log:printInfo("------------------ List Documents -------------------");
-    DocumentList documentList = azureCosmosClient->getDocumentList(properties)
+    stream<Document> documentList = container->getDocumentList()
 
     log:printInfo("------------------ Get One Document -------------------");
-    Document document = azureCosmosClient->getDocument(properties, document1.id, [1234])
+    Document document = container->getDocument(document1.id, [1234])
 
     log:printInfo("------------------ Query Documents -------------------");
     Query sqlQuery = {
         query: string `SELECT * FROM ${container1.id.toString()} f WHERE f.Address.City = 'Seattle'`,
         parameters: []
     };
-    var resultStream = AzureCosmosClient->queryDocuments(properties, [1234], sqlQuery);
-    error? e = result.forEach(function (json document){
+    stream<json> results = container->queryDocuments([1234], sqlQuery);
+    error? e = results.forEach(function (json document){
                     log:printInfo(document);
                 });    
 
     log:printInfo("------------------ Delete Document -------------------");
-    var result = AzureCosmosClient->deleteDocument(properties, document.id, [1234]);
+    var result = container->deleteDocument(document.id, [1234]);
 
 }
 ```

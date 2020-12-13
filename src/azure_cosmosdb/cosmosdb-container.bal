@@ -127,12 +127,12 @@ public client class Container  {
         if(maxItemCount is int){
             request.setHeader(MAX_ITEM_COUNT_HEADER, maxItemCount.toString()); 
         }
-        stream<Document> documentStream = check self.retrieveDocuments(requestPath, request);
+        stream<Document> documentStream = check self.retrieveDocuments(requestPath, request, maxItemCount);
         return documentStream; 
     }
 
-    private function retrieveDocuments(string path, http:Request request, string? continuationHeader = (), Document[]? 
-    documentArray = (), int? maxItemCount = ()) returns @tainted stream<Document>|error {
+    private function retrieveDocuments(string path, http:Request request, int? maxItemCount = (), string? continuationHeader = (), Document[]? 
+    documentArray = ()) returns @tainted stream<Document>|error {
         if(continuationHeader is string){
             request.setHeader(CONTINUATION_HEADER, continuationHeader);
         }
@@ -143,8 +143,8 @@ public client class Container  {
         if(payload.Documents is json){
             Document[] finalArray = convertToDocumentArray(documents, <json[]>payload.Documents);
             documentStream = (<@untainted>finalArray).toStream();
-            if(headers?.continuationHeader != () && finalArray.length() == maxItemCount){            
-                documentStream = check self.retrieveDocuments(path, request, headers.continuationHeader,finalArray);
+            if(headers?.continuationHeader != () && maxItemCount is ()){            
+                documentStream = check self.retrieveDocuments(path, request, (), headers.continuationHeader,finalArray);
             }
         }
         return documentStream;
@@ -219,7 +219,7 @@ public client class Container  {
     }
 
     # List all stored procedures inside a collection
-    # + maxItemCount -
+    # + maxItemCount - Optional integer parameter representing maximum item count.
     # + return - If successful, returns a StoredProcedureList. Else returns error. 
     public remote function listStoredProcedures(int? maxItemCount = ()) returns @tainted stream<StoredProcedure>|error {
         http:Request request = new;
@@ -230,12 +230,12 @@ public client class Container  {
         if(maxItemCount is int){
             request.setHeader(MAX_ITEM_COUNT_HEADER, maxItemCount.toString()); 
         }
-        stream<StoredProcedure> storedProcedureStream = check self.retrieveStoredProcedures(requestPath, request);
+        stream<StoredProcedure> storedProcedureStream = check self.retrieveStoredProcedures(requestPath, request, maxItemCount);
         return storedProcedureStream;         
     }
 
-    private function retrieveStoredProcedures(string path, http:Request request, string? continuationHeader = (), StoredProcedure[]? 
-    storedProcedureArray = (), int? maxItemCount = ()) returns @tainted stream<StoredProcedure>|error {
+    private function retrieveStoredProcedures(string path, http:Request request, int? maxItemCount = (), string? continuationHeader = (), StoredProcedure[]? 
+    storedProcedureArray = ()) returns @tainted stream<StoredProcedure>|error {
         if(continuationHeader is string){
             request.setHeader(CONTINUATION_HEADER, continuationHeader);
         }
@@ -246,8 +246,8 @@ public client class Container  {
         if(payload.StoredProcedures is json){
             StoredProcedure[] finalArray = convertToStoredProcedureArray(storedProcedures, <json[]>payload.StoredProcedures);
             storedProcedureStream = (<@untainted>finalArray).toStream();
-            if(headers?.continuationHeader != () && finalArray.length() == maxItemCount){            
-                storedProcedureStream = check self.retrieveStoredProcedures(path, request, headers.continuationHeader,finalArray);
+            if(headers?.continuationHeader != () && maxItemCount is ()){            
+                storedProcedureStream = check self.retrieveStoredProcedures(path, request, (), headers.continuationHeader,finalArray);
             }
         }
         return storedProcedureStream;
@@ -268,7 +268,6 @@ public client class Container  {
     }
 
     # Execute a stored procedure inside a collection
-    # ***********function only works correctly for string parameters************
     # + storedProcedureId - id of the stored procedure to execute
     # + parameters - The list of function paramaters to pass to javascript function as an array.
     # + return - If successful, returns json with the output from the executed funxtion. Else returns error. 
@@ -316,7 +315,7 @@ public client class Container  {
     }
 
     # Get a list of existing user defined functions inside a collection
-    # + maxItemCount - 
+    # + maxItemCount - Optional integer parameter representing maximum item count.
     # + return - If successful, returns a UserDefinedFunctionList. Else returns error. 
     public remote function listUserDefinedFunctions(int? maxItemCount = ()) returns @tainted stream<UserDefinedFunction>|error {
         http:Request request = new;
@@ -327,12 +326,12 @@ public client class Container  {
         if(maxItemCount is int){
             request.setHeader(MAX_ITEM_COUNT_HEADER, maxItemCount.toString()); 
         }
-        stream<UserDefinedFunction> storedProcedureStream = check self.retrieveUserDefinedFunctions(requestPath, request);
+        stream<UserDefinedFunction> storedProcedureStream = check self.retrieveUserDefinedFunctions(requestPath, request, maxItemCount);
         return storedProcedureStream;   
     }
 
-    private function retrieveUserDefinedFunctions(string path, http:Request request, string? continuationHeader = (), UserDefinedFunction[]? 
-    storedProcedureArray = (), int? maxItemCount = ()) returns @tainted stream<UserDefinedFunction>|error {
+    private function retrieveUserDefinedFunctions(string path, http:Request request, int? maxItemCount = (), string? continuationHeader = (), UserDefinedFunction[]? 
+    storedProcedureArray = ()) returns @tainted stream<UserDefinedFunction>|error {
         if(continuationHeader is string){
             request.setHeader(CONTINUATION_HEADER, continuationHeader);
         }
@@ -343,8 +342,8 @@ public client class Container  {
         if(payload.UserDefinedFunctions is json){
             UserDefinedFunction[] finalArray = convertsToUserDefinedFunctionArray(storedProcedures, <json[]>payload.UserDefinedFunctions);
             storedProcedureStream = (<@untainted>finalArray).toStream();
-            if(headers?.continuationHeader != () && finalArray.length() == maxItemCount){            
-                storedProcedureStream = check self.retrieveUserDefinedFunctions(path, request, headers.continuationHeader,finalArray);
+            if(headers?.continuationHeader != () && maxItemCount is ()){            
+                storedProcedureStream = check self.retrieveUserDefinedFunctions(path, request, (), headers.continuationHeader, finalArray);
             }
         }
         return storedProcedureStream;
@@ -396,7 +395,7 @@ public client class Container  {
     }
 
     # List existing triggers inside a collection
-    # + maxItemCount -
+    # + maxItemCount - Optional integer parameter representing maximum item count.
     # + return - If successful, returns a TriggerList. Else returns error. 
     public remote function listTriggers(int? maxItemCount = ()) returns @tainted stream<Trigger>|error {
         http:Request request = new;
@@ -407,12 +406,12 @@ public client class Container  {
         if(maxItemCount is int){
             request.setHeader(MAX_ITEM_COUNT_HEADER, maxItemCount.toString()); 
         }
-        stream<Trigger> storedProcedureStream = check self.retrieveTriggers(requestPath, request);
+        stream<Trigger> storedProcedureStream = check self.retrieveTriggers(requestPath, request, maxItemCount);
         return storedProcedureStream;       
     }
     
-    private function retrieveTriggers(string path, http:Request request, string? continuationHeader = (), Trigger[]? 
-    storedProcedureArray = (), int? maxItemCount = ()) returns @tainted stream<Trigger>|error {
+    private function retrieveTriggers(string path, http:Request request, int? maxItemCount = (), string? continuationHeader = (), Trigger[]? 
+    storedProcedureArray = ()) returns @tainted stream<Trigger>|error {
         if(continuationHeader is string){
             request.setHeader(CONTINUATION_HEADER, continuationHeader);
         }
@@ -423,8 +422,8 @@ public client class Container  {
         if(payload.Triggers is json){
             Trigger[] finalArray = convertToTriggerArray(storedProcedures, <json[]>payload.Triggers);
             storedProcedureStream = (<@untainted>finalArray).toStream();
-            if(headers?.continuationHeader != () && finalArray.length() == maxItemCount){            
-                storedProcedureStream = check self.retrieveTriggers(path, request, headers.continuationHeader,finalArray);
+            if(headers?.continuationHeader != () && maxItemCount is ()){            
+                storedProcedureStream = check self.retrieveTriggers(path, request, (), headers.continuationHeader, finalArray);
             }
         }
         return storedProcedureStream;

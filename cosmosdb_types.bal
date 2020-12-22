@@ -14,21 +14,17 @@
 // specific language governing permissions and limitations
 // under the License. 
 
-import ballerina/http;
-
 # Represents configuration parameters to create Azure Cosmos DB client.
 # 
 # + baseUrl - Base URL of the Azure Cosmos DB account.
 # + keyOrResourceToken - The token usesd to make the request call.
 # + tokenType - The type of token usesd to make the request call "master" or "resource". 
 # + tokenVersion - The version of the token.
-# + secureSocketConfig - The secure socket config.
 public type AzureCosmosConfiguration record {|
     string baseUrl;
     string keyOrResourceToken;
     string tokenType;
     string tokenVersion;
-    http:ClientSecureSocket? secureSocketConfig;
 |};
 
 # Represents the common elements which are returned inside json reponse body.
@@ -36,7 +32,6 @@ public type AzureCosmosConfiguration record {|
 # + resourceId - Resource id (_rid), a unique identifier which is used internally for placement and navigation of the resource.
 # + selfReference - Self reference (_self) unique addressable URI for the resource.
 # + timeStamp - Timestamp (_ts) specifies the last updated timestamp of the resource.
-# + eTag - Representing the resource etag (_etag) required for optimistic concurrency control. 
 public type Common record {|
     string resourceId?;
     string selfReference?;
@@ -49,7 +44,6 @@ public type Common record {|
 # + sessionToken - Session token of the request.
 # + requestCharge - This is the number of normalized requests a.k.a. request units (RU) for the operation.
 # + resourceUsage - Current usage count of a resource in an account.  
-//# + itemCount - Number of items returned for a query or read-feed request.
 # + etag - Resource etag for the resource retrieved same as eTag in the response. 
 # + date - Date time of the response operation.
 public type ResponseMetadata record {|
@@ -57,7 +51,6 @@ public type ResponseMetadata record {|
     string? sessionToken = ();
     string? requestCharge = ();
     string? resourceUsage = ();
-    //string? itemCountHeader = ();
     string? etag = ();
     string? date = ();
 |};

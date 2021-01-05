@@ -2,9 +2,7 @@
 
 name: Deployment
 
-on:
-    release:
-        types: [published]
+on: [push]
 
 jobs:
     build:

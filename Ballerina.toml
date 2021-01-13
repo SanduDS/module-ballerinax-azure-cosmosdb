@@ -1,5 +1,5 @@
 [package]
-org= "ballerinax"
+org= "shlz"
 name= "cosmosdb"
 version= "0.1.0"
 
